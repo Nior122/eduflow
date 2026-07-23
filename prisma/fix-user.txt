@@ -1,0 +1,31 @@
+// ─── USER & AUTH ─────────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String?
+  name          String?
+  role          UserRole   @default(SCHOOL_ADMIN)
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  schoolId      String?
+  school        School?        @relation(fields: [schoolId], references: [id])
+  student       Student?
+  teacher       Teacher?
+  parent        Parent?
+  accounts      Account[]
+  sessions      Session[]
+  notifications Notification[]
+  announcements Announcement[]
+  sentMessages  Message[]      @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+
+  @@index([email])
+  @@index([role])
+  @@index([schoolId])
+}
