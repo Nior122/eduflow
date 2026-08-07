@@ -17,7 +17,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, GraduationCap, Pencil, Trash2, Loader2, Mail, Phone, BookMarked, X } from "lucide-react";
+import { Plus, GraduationCap, Pencil, Trash2, Loader2, Mail, Phone, BookMarked, X, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getInitials, formatDate } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -37,6 +37,11 @@ type Teacher = {
   employeeDate: string;
   qualification: string | null;
   specialization: string | null;
+  staffId: string | null;
+  yearsOfExperience: number | null;
+  salaryGrade: string | null;
+  address: string | null;
+  department: { id: string; name: string } | null;
   classSubjects: TeacherSubject[];
   _count: { attendances: number; results: number; lessonPlans: number };
 };
@@ -44,11 +49,13 @@ type Teacher = {
 const EMPTY_FORM = {
   firstName: "", lastName: "", email: "", phone: "",
   qualification: "", specialization: "", employeeDate: "",
+  staffId: "", yearsOfExperience: "", salaryGrade: "", address: "", departmentId: "",
 };
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -74,6 +81,7 @@ export default function TeachersPage() {
     load();
     fetch("/api/admin/classes").then(r => r.ok && r.json()).then(d => d?.classes && setClasses(d.classes)).catch(() => {});
     fetch("/api/admin/subjects").then(r => r.ok && r.json()).then(d => d?.subjects && setSubjects(d.subjects)).catch(() => {});
+    fetch("/api/admin/departments").then(r => r.ok && r.json()).then(d => d?.departments && setDepartments(d.departments)).catch(() => {});
   }, []);
 
   const openCreate = () => {
@@ -92,6 +100,11 @@ export default function TeachersPage() {
       qualification: t.qualification ?? "",
       specialization: t.specialization ?? "",
       employeeDate: t.employeeDate ? new Date(t.employeeDate).toISOString().slice(0, 10) : "",
+      staffId: t.staffId ?? "",
+      yearsOfExperience: t.yearsOfExperience != null ? String(t.yearsOfExperience) : "",
+      salaryGrade: t.salaryGrade ?? "",
+      address: t.address ?? "",
+      departmentId: t.department?.id ?? "",
     });
     setDialogOpen(true);
   };
@@ -216,6 +229,21 @@ export default function TeachersPage() {
               </div>
               <div className="space-y-2"><Label>Qualification</Label><Input value={formData.qualification} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} placeholder="e.g. B.Ed, M.Sc" /></div>
               <div className="space-y-2"><Label>Specialization</Label><Input value={formData.specialization} onChange={(e) => setFormData({ ...formData, specialization: e.target.value })} placeholder="e.g. Mathematics" /></div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select value={formData.departmentId} onValueChange={(v) => setFormData({ ...formData, departmentId: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2"><Label>Staff ID</Label><Input value={formData.staffId} onChange={(e) => setFormData({ ...formData, staffId: e.target.value })} placeholder="e.g. STF-001" /></div>
+                <div className="space-y-2"><Label>Years of Experience</Label><Input type="number" min={0} value={formData.yearsOfExperience} onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Salary Grade</Label><Input value={formData.salaryGrade} onChange={(e) => setFormData({ ...formData, salaryGrade: e.target.value })} placeholder="e.g. GL 12" /></div>
+              </div>
+              <div className="space-y-2"><Label>Address</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -235,6 +263,7 @@ export default function TeachersPage() {
                 <TableHead>Teacher</TableHead>
                 <TableHead className="hidden md:table-cell">Contact</TableHead>
                 <TableHead className="hidden md:table-cell">Assignments</TableHead>
+                <TableHead className="hidden lg:table-cell">Department</TableHead>
                 <TableHead className="hidden lg:table-cell">Qualification</TableHead>
                 <TableHead className="hidden lg:table-cell">Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -275,6 +304,7 @@ export default function TeachersPage() {
                         <div>
                           <p className="font-medium text-sm">{t.firstName} {t.lastName}</p>
                           <p className="text-xs text-muted-foreground">{t.specialization || "General"}</p>
+                          {t.staffId && <p className="text-xs text-muted-foreground font-mono">{t.staffId}</p>}
                         </div>
                       </div>
                     </TableCell>
@@ -309,6 +339,9 @@ export default function TeachersPage() {
                           <BookMarked className="mr-1 h-3 w-3" /> Assign
                         </Button>
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {t.department ? <Badge variant="secondary" className="text-xs"><Building2 className="mr-1 h-3 w-3" />{t.department.name}</Badge> : "—"}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{t.qualification || "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{formatDate(t.employeeDate)}</TableCell>

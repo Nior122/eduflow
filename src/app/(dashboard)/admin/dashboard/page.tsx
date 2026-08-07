@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
@@ -11,19 +10,25 @@ import {
   BookOpen,
   ClipboardCheck,
   DollarSign,
+  UserPlus,
+  Wallet,
   ArrowUpRight,
   Clock,
   AlertCircle,
 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 type DashboardData = {
   stats: {
     totalStudents: number;
     totalTeachers: number;
+    totalParents: number;
     totalClasses: number;
     attendanceRate: number;
     feeCollection: number;
     performanceAvg: number;
+    revenue: number;
+    outstanding: number;
     studentTrend: number | null;
     teacherTrend: number | null;
   };
@@ -34,12 +39,13 @@ type DashboardData = {
     time: string;
     type: string;
   }>;
-  notices: Array<{
+  recentAdmissions: Array<{
     id: string;
-    title: string;
-    priority: string;
+    name: string;
+    admissionNumber: string;
     createdAt: string;
   }>;
+  feeTotal: number;
 };
 
 export default function AdminDashboardPage() {
@@ -65,8 +71,8 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
@@ -88,20 +94,26 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard
           title="Total Students"
           value={stats?.totalStudents ?? 0}
           icon={Users}
           trend={stats?.studentTrend ?? undefined}
-          description="vs last term"
+          description="vs last month"
         />
         <StatCard
           title="Total Teachers"
           value={stats?.totalTeachers ?? 0}
           icon={GraduationCap}
           trend={stats?.teacherTrend ?? undefined}
-          description="vs last term"
+          description="vs last month"
+        />
+        <StatCard
+          title="Parents"
+          value={stats?.totalParents ?? 0}
+          icon={UserPlus}
+          description="linked accounts"
         />
         <StatCard
           title="Classes"
@@ -113,7 +125,7 @@ export default function AdminDashboardPage() {
           title="Attendance Rate"
           value={stats ? `${stats.attendanceRate}%` : "0%"}
           icon={ClipboardCheck}
-          description="this week"
+          description="last 100 records"
         />
         <StatCard
           title="Fee Collection"
@@ -121,12 +133,23 @@ export default function AdminDashboardPage() {
           icon={DollarSign}
           description="this term"
         />
+        <StatCard
+          title="Revenue"
+          value={formatCurrency(stats?.revenue ?? 0)}
+          icon={Wallet}
+          description="paid & waived"
+        />
+        <StatCard
+          title="Outstanding Fees"
+          value={formatCurrency(stats?.outstanding ?? 0)}
+          icon={AlertCircle}
+          description="pending & partial"
+        />
       </div>
 
-      {/* Performance Overview & Recent Activity */}
+      {/* Performance, Activity & Recent Admissions */}
       <div className="grid gap-6 lg:grid-cols-7">
-        {/* Performance Chart Area */}
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Academic Performance</CardTitle>
           </CardHeader>
@@ -156,8 +179,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -187,48 +209,35 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Notices */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            Recent Announcements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {(data?.notices ?? []).length > 0 ? (
-              data?.notices.map((notice) => (
-                <div key={notice.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      variant={
-                        notice.priority === "URGENT"
-                          ? "destructive"
-                          : notice.priority === "HIGH"
-                          ? "warning"
-                          : "default"
-                      }
-                    >
-                      {notice.priority}
-                    </Badge>
-                    <span className="text-sm font-medium">{notice.title}</span>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Recent Admissions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(data?.recentAdmissions ?? []).length > 0 ? (
+                data?.recentAdmissions.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="text-sm font-medium">{s.name}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{s.admissionNumber}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatDate(s.createdAt)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(notice.createdAt).toLocaleDateString()}
-                  </span>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">No recent admissions</p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No announcements yet</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
