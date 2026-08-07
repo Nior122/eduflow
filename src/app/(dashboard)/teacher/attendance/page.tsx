@@ -114,6 +114,7 @@ export default function AttendancePage() {
       case "ABSENT": return "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200";
       case "LATE": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200";
       case "EXCUSED": return "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200";
+      case "SICK": return "bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200";
       default: return "";
     }
   };
@@ -123,6 +124,7 @@ export default function AttendancePage() {
     ABSENT: Object.values(records).filter(v => v === "ABSENT").length,
     LATE: Object.values(records).filter(v => v === "LATE").length,
     EXCUSED: Object.values(records).filter(v => v === "EXCUSED").length,
+    SICK: Object.values(records).filter(v => v === "SICK").length,
   };
 
   return (
@@ -179,7 +181,7 @@ export default function AttendancePage() {
 
       {/* Status Summary */}
       {students.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-3">
           {Object.entries(statusCounts).map(([status, count]) => (
             <div key={status} className={`rounded-lg border p-3 text-center ${getStatusColor(status)}`}>
               <p className="text-2xl font-bold">{count}</p>
@@ -227,7 +229,7 @@ export default function AttendancePage() {
                     <TableCell className="hidden sm:table-cell text-muted-foreground">{student.admissionNumber}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {["PRESENT", "ABSENT", "LATE", "EXCUSED"].map((status) => (
+                        {["PRESENT", "ABSENT", "LATE", "EXCUSED", "SICK"].map((status) => (
                           <button
                             key={status}
                             onClick={() => setRecords({ ...records, [student.id]: status })}
@@ -237,7 +239,7 @@ export default function AttendancePage() {
                                 : "border-input text-muted-foreground hover:bg-accent"
                             }`}
                           >
-                            {status === "PRESENT" ? "P" : status === "ABSENT" ? "A" : status === "LATE" ? "L" : "E"}
+                            {status === "PRESENT" ? "P" : status === "ABSENT" ? "A" : status === "LATE" ? "L" : status === "EXCUSED" ? "E" : "S"}
                           </button>
                         ))}
                       </div>
