@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { validate, announcementSchema } from "@/lib/validations";
+import { Prisma } from "@prisma/client";
+
+const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.schoolId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  if (denied) return denied;
+  const schoolId = session?.user?.schoolId;
+  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const announcements = await prisma.announcement.findMany({
-    where: { schoolId: session.user.schoolId },
+    where: { schoolId, isActive: true },
+    include: { author: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
@@ -16,15 +24,36 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.schoolId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  if (denied) return denied;
+  const schoolId = session?.user?.schoolId;
+  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
     const body = await req.json();
+    const parsed = validate(announcementSchema, body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
+    }
+    const data = parsed.data;
+
     const announcement = await prisma.announcement.create({
-      data: { ...body, schoolId: session.user.schoolId, authorId: session.user.id },
+      data: {
+        title: data.title,
+        content: data.content,
+        priority: data.priority,
+        audience: data.audience,
+        published: true,
+        schoolId,
+        authorId: session?.user?.id ?? null,
+      },
     });
     return NextResponse.json({ announcement }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json({ error: "Duplicate announcement" }, { status: 409 });
+    }
+    console.error("Failed to create announcement:", error);
+    return NextResponse.json({ error: "Failed to create announcement" }, { status: 500 });
   }
 }

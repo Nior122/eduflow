@@ -2,15 +2,17 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
+  const isApi = pathname.startsWith("/api");
 
   // Public routes
-  const publicRoutes = ["/login", "/register", "/forgot-password", "/", "/api/auth"];
-  const isPublic = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith("/api/auth")
-  );
+  const publicRoutes = ["/login", "/register", "/forgot-password", "/reset-password", "/", "/unauthorized"];
+  const isPublic =
+    publicRoutes.some((route) => pathname === route) || pathname.startsWith("/api/auth");
 
   // Static files
   if (
@@ -22,39 +24,58 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!session && !isPublic) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (!session) {
+    // API routes must answer with JSON, not an HTML redirect
+    if (isApi) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!isPublic) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next();
   }
 
-  if (session) {
-    const role = session.user.role;
-    const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
+  const role = session.user.role;
+  const isAuthPage = ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname);
 
-    // Redirect authenticated users away from auth pages
-    if (isAuthPage) {
-      return NextResponse.redirect(new URL(getDashboardUrl(role), req.url));
-    }
+  // Redirect authenticated users away from auth pages
+  if (isAuthPage) {
+    return NextResponse.redirect(new URL(getDashboardUrl(role), req.url));
+  }
 
-    // Role-based route protection
-    const adminRoutes = ["/admin"];
-    const teacherRoutes = ["/teacher"];
-    const parentRoutes = ["/parent"];
-    const studentRoutes = ["/student"];
+  // Role gates for API routes (defense-in-depth; each route also self-checks)
+  if (isApi) {
+    const apiRoleGates: Array<[string, readonly string[]]> = [
+      ["/api/admin", ADMIN_ROLES],
+      ["/api/attendance", ["TEACHER", ...ADMIN_ROLES]],
+      ["/api/results", ["TEACHER", ...ADMIN_ROLES]],
+      ["/api/teacher", ["TEACHER"]],
+      ["/api/parent", ["PARENT"]],
+      ["/api/student", ["STUDENT"]],
+    ];
+    for (const [prefix, allowed] of apiRoleGates) {
+      if (pathname.startsWith(prefix)) {
+        if (!allowed.includes(role)) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        break;
+      }
+    }
+    return NextResponse.next();
+  }
 
-    if (adminRoutes.some((r) => pathname.startsWith(r)) && !["SUPER_ADMIN", "SCHOOL_ADMIN"].includes(role)) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-    if (pathname.startsWith("/teacher") && role !== "TEACHER") {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-    if (pathname.startsWith("/parent") && role !== "PARENT") {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-    if (pathname.startsWith("/student") && role !== "STUDENT") {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
+  // Role-based page protection
+  if (pathname.startsWith("/admin") && !ADMIN_ROLES.includes(role)) {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+  if (pathname.startsWith("/teacher") && role !== "TEACHER") {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+  if (pathname.startsWith("/parent") && role !== "PARENT") {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+  if (pathname.startsWith("/student") && role !== "STUDENT") {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
   return NextResponse.next();

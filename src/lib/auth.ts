@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { NextResponse } from "next/server";
 import { prisma } from "./db";
 import type { UserRole } from "@prisma/client";
 
@@ -94,3 +95,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+// ─── Authorization helpers (Phase 1) ─────────────────────────────────
+// Central guards so every API route can enforce roles + school scoping
+// with a single call. Routes must still call auth() and pass the session.
+
+export type AuthSession = Awaited<ReturnType<typeof auth>>;
+
+export function hasRole(session: AuthSession, roles: readonly UserRole[]): boolean {
+  return !!session?.user && roles.includes(session.user.role);
+}
+
+/**
+ * Route guard helper. Returns an error NextResponse (401 unauthenticated,
+ * 403 wrong role / no school) when the session fails the requirement, or
+ * null when the request may proceed.
+ */
+export function requireRole(
+  session: AuthSession,
+  roles: readonly UserRole[],
+  opts: { schoolScoped?: boolean } = {}
+): NextResponse | null {
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!roles.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (opts.schoolScoped && !session.user.schoolId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
+}

@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { validate, studentSchema } from "@/lib/validations";
+import { provisionUser } from "@/lib/provision";
+import { Prisma } from "@prisma/client";
+
+const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.schoolId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  if (denied) return denied;
+  const schoolId = session?.user?.schoolId;
+  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const classId = searchParams.get("classId");
   const search = searchParams.get("search");
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "50");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50")));
 
   const where: Record<string, unknown> = {
-    schoolId: session.user.schoolId,
+    schoolId,
     isActive: true,
   };
 
@@ -25,6 +31,7 @@ export async function GET(req: Request) {
       { firstName: { contains: search, mode: "insensitive" } },
       { lastName: { contains: search, mode: "insensitive" } },
       { admissionNumber: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
     ];
   }
 
@@ -53,22 +60,62 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.schoolId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  if (denied) return denied;
+  const schoolId = session?.user?.schoolId;
+  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
     const body = await req.json();
-    const student = await prisma.student.create({
-      data: {
-        ...body,
-        schoolId: session.user.schoolId,
-        enrollmentDate: body.enrollmentDate ? new Date(body.enrollmentDate) : new Date(),
-        dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
-      },
+    const parsed = validate(studentSchema, body);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
+    }
+    const data = parsed.data;
+
+    // Student + login account in one transaction; temp password returned once.
+    const { student, creds } = await prisma.$transaction(async (tx) => {
+      const creds = await provisionUser(
+        {
+          email: data.email ?? "",
+          role: "STUDENT",
+          schoolId,
+          name: `${data.firstName} ${data.lastName}`,
+          phone: data.phone ?? null,
+        },
+        tx
+      );
+      const student = await tx.student.create({
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+          gender: data.gender ?? null,
+          address: data.address ?? null,
+          phone: data.phone ?? null,
+          email: creds.loginEmail,
+          admissionNumber: data.admissionNumber,
+          classId: data.classId ?? null,
+          parentId: data.parentId ?? null,
+          medicalInfo: data.medicalInfo ?? null,
+          schoolId,
+          userId: creds.userId,
+        },
+      });
+      return { student, creds };
     });
-    return NextResponse.json({ student }, { status: 201 });
+
+    return NextResponse.json(
+      { student, credentials: { email: creds.loginEmail, tempPassword: creds.tempPassword } },
+      { status: 201 }
+    );
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json(
+        { error: "A student with this admission number or email already exists" },
+        { status: 409 }
+      );
+    }
     console.error("Failed to create student:", error);
     return NextResponse.json({ error: "Failed to create student" }, { status: 500 });
   }

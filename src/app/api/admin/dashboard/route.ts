@@ -1,33 +1,46 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const schoolId = session.user.schoolId;
-  if (!schoolId) {
-    return NextResponse.json({ error: "No school found" }, { status: 400 });
-  }
+  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  if (denied) return denied;
+  const schoolId = session?.user?.schoolId;
+  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
+    const now = new Date();
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const prevWindowStart = new Date(monthAgo.getTime() - 30 * 24 * 60 * 60 * 1000);
+
     const [
       totalStudents,
       totalTeachers,
       totalClasses,
+      studentsRecent,
+      studentsPrev,
+      teachersRecent,
+      teachersPrev,
       recentAttendances,
       feeRecords,
       feeTotal,
       results,
       recentActivities,
-      notices,
     ] = await Promise.all([
       prisma.student.count({ where: { schoolId, isActive: true } }),
       prisma.teacher.count({ where: { schoolId, isActive: true } }),
-      prisma.class.count({ where: { schoolId } }),
+      prisma.class.count({ where: { schoolId, isActive: true } }),
+      prisma.student.count({ where: { schoolId, isActive: true, createdAt: { gte: monthAgo } } }),
+      prisma.student.count({
+        where: { schoolId, isActive: true, createdAt: { gte: prevWindowStart, lt: monthAgo } },
+      }),
+      prisma.teacher.count({ where: { schoolId, isActive: true, createdAt: { gte: monthAgo } } }),
+      prisma.teacher.count({
+        where: { schoolId, isActive: true, createdAt: { gte: prevWindowStart, lt: monthAgo } },
+      }),
       prisma.attendance.findMany({
         where: { class: { schoolId } },
         orderBy: { date: "desc" },
@@ -35,44 +48,46 @@ export async function GET() {
       }),
       prisma.feeRecord.findMany({
         where: { fee: { schoolId } },
+        select: { amount: true, status: true },
       }),
       prisma.fee.aggregate({
-        where: { schoolId },
+        where: { schoolId, isActive: true },
         _sum: { amount: true },
       }),
       prisma.result.findMany({
         where: { class: { schoolId } },
         take: 50,
+        select: { total: true },
       }),
       prisma.announcement.findMany({
-        where: { schoolId },
+        where: { schoolId, isActive: true },
         orderBy: { createdAt: "desc" },
         take: 5,
-      }),
-      prisma.announcement.findMany({
-        where: { schoolId },
-        orderBy: { createdAt: "desc" },
-        take: 3,
+        select: { id: true, title: true, content: true, createdAt: true },
       }),
     ]);
 
-    // Attendance rate
+    // Attendance rate (last 100 records)
     const presentCount = recentAttendances.filter((a) => a.status === "PRESENT").length;
-    const attendanceRate = recentAttendances.length > 0
-      ? Math.round((presentCount / recentAttendances.length) * 100)
-      : 0;
+    const attendanceRate =
+      recentAttendances.length > 0
+        ? Math.round((presentCount / recentAttendances.length) * 100)
+        : 0;
 
-    // Fee collection rate
-    const paidRecords = feeRecords.filter((r) => r.status === "PAID");
-    const feeCollection = feeRecords.length > 0
-      ? Math.round((paidRecords.length / feeRecords.length) * 100)
-      : 0;
+    // Fee collection rate — real money ratio (paid sum / expected sum)
+    const paidSum = feeRecords
+      .filter((r) => r.status === "PAID" || r.status === "WAIVED")
+      .reduce((s, r) => s + Number(r.amount), 0);
+    const expectedSum = feeRecords.reduce((s, r) => s + Number(r.amount), 0);
+    const feeCollection =
+      expectedSum > 0 ? Math.round((paidSum / expectedSum) * 100) : 0;
 
     // Average performance
     const totals = results.map((r) => Number(r.total)).filter((t) => !isNaN(t));
-    const performanceAvg = totals.length > 0
-      ? Math.round((totals.reduce((a, b) => a + b, 0) / totals.length) * 10) / 10
-      : 0;
+    const performanceAvg =
+      totals.length > 0
+        ? Math.round((totals.reduce((a, b) => a + b, 0) / totals.length) * 10) / 10
+        : 0;
 
     return NextResponse.json({
       stats: {
@@ -82,6 +97,8 @@ export async function GET() {
         attendanceRate,
         feeCollection,
         performanceAvg,
+        studentTrend: trendOf(studentsPrev, studentsRecent),
+        teacherTrend: trendOf(teachersPrev, teachersRecent),
       },
       recentActivities: recentActivities.map((a) => ({
         id: a.id,
@@ -90,17 +107,18 @@ export async function GET() {
         time: formatRelativeTime(a.createdAt),
         type: "announcement",
       })),
-      notices: notices.map((n) => ({
-        id: n.id,
-        title: n.title,
-        priority: n.priority,
-        createdAt: n.createdAt.toISOString(),
-      })),
+      feeTotal: Number(feeTotal._sum.amount ?? 0),
     });
   } catch (error) {
     console.error("Dashboard API error:", error);
     return NextResponse.json({ error: "Failed to load dashboard" }, { status: 500 });
   }
+}
+
+/** Percent change vs the previous window; null when there is no baseline. */
+function trendOf(prev: number, recent: number): number | null {
+  if (prev <= 0) return recent > 0 ? 100 : null;
+  return Math.round(((recent - prev) / prev) * 100);
 }
 
 function formatRelativeTime(date: Date): string {

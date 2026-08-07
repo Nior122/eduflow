@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!rateLimit(`ai:${session.user.id}`, { limit: 60, windowMs: 60 * 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   try {
-    const { question } = await req.json();
+    const body = await req.json();
+    const parsed = z.object({ question: z.string().min(1, "Question is required").max(2000) }).safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", issues: parsed.error.issues }, { status: 400 });
+    }
+    const { question } = parsed.data;
 
     if (process.env.OPENAI_API_KEY) {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -20,7 +36,9 @@ export async function POST(req: Request) {
 
       if (response.ok) {
         const data = await response.json();
-        return NextResponse.json({ answer: data.choices?.[0]?.message?.content || "I'm not sure about that. Can you ask another question?" });
+        return NextResponse.json({
+          answer: data.choices?.[0]?.message?.content || "I'm not sure about that. Can you ask another question?",
+        });
       }
     }
 
@@ -38,7 +56,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ answer });
-  } catch {
-    return NextResponse.json({ answer: "I'm having trouble answering right now. Please try asking your question in a different way!" });
+  } catch (error) {
+    console.error("Homework assistant error:", error);
+    return NextResponse.json({
+      answer: "I'm having trouble answering right now. Please try asking your question in a different way!",
+    });
   }
 }

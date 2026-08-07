@@ -4,6 +4,14 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    console.log("SEEDING DISABLED IN PRODUCTION");
+    return;
+  }
+  if (process.env.SEED_CONFIRM !== "yes") {
+    console.log("WARNING: seed wipes all data - run with SEED_CONFIRM=yes to proceed");
+    return;
+  }
   console.log("🌱 Seeding EduFlow database...");
 
   // Clean existing data

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { validate, studentUpdateSchema } from "@/lib/validations";
+import { validate, teacherUpdateSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
@@ -18,27 +18,20 @@ export async function GET(_req: Request, { params }: RouteCtx) {
   const { id } = await params;
 
   try {
-    const student = await prisma.student.findFirst({
-      where: { id, schoolId },
+    const teacher = await prisma.teacher.findFirst({
+      where: { id, schoolId, isActive: true },
       include: {
-        class: true,
-        parent: true,
-        attendances: { orderBy: { date: "desc" }, take: 30 },
-        results: { include: { subject: true, class: true }, orderBy: { createdAt: "desc" } },
-        feeRecords: { include: { fee: true }, orderBy: { createdAt: "desc" } },
-        aiReports: { orderBy: { createdAt: "desc" }, take: 5 },
-        performanceAnalyses: { orderBy: { createdAt: "desc" }, take: 5 },
+        classSubjects: {
+          include: { class: { select: { id: true, name: true } }, subject: { select: { id: true, name: true } } },
+        },
+        _count: { select: { attendances: true, results: true, lessonPlans: true } },
       },
     });
-
-    if (!student) {
-      return NextResponse.json({ error: "Student not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ student });
+    if (!teacher) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+    return NextResponse.json({ teacher });
   } catch (error) {
-    console.error("Failed to fetch student:", error);
-    return NextResponse.json({ error: "Failed to fetch student" }, { status: 500 });
+    console.error("Failed to fetch teacher:", error);
+    return NextResponse.json({ error: "Failed to fetch teacher" }, { status: 500 });
   }
 }
 
@@ -53,34 +46,27 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
 
   try {
     const body = await req.json();
-    const parsed = validate(studentUpdateSchema, body);
+    const parsed = validate(teacherUpdateSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
     }
     const data = parsed.data;
 
-    const existing = await prisma.student.findFirst({
+    const existing = await prisma.teacher.findFirst({
       where: { id, schoolId },
       select: { id: true, userId: true, email: true },
     });
-    if (!existing) {
-      return NextResponse.json({ error: "Student not found" }, { status: 404 });
-    }
+    if (!existing) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
 
-    const updateData: Prisma.StudentUpdateInput = {
+    const updateData: Prisma.TeacherUpdateInput = {
       ...(data.firstName !== undefined && { firstName: data.firstName }),
       ...(data.lastName !== undefined && { lastName: data.lastName }),
-      ...(data.dateOfBirth !== undefined && { dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null }),
-      ...(data.gender !== undefined && { gender: data.gender }),
-      ...(data.address !== undefined && { address: data.address ?? null }),
       ...(data.phone !== undefined && { phone: data.phone ?? null }),
-      ...(data.admissionNumber !== undefined && { admissionNumber: data.admissionNumber }),
-      ...(data.classId !== undefined && { classId: data.classId ?? null }),
-      ...(data.parentId !== undefined && { parentId: data.parentId ?? null }),
-      ...(data.medicalInfo !== undefined && { medicalInfo: data.medicalInfo ?? null }),
+      ...(data.qualification !== undefined && { qualification: data.qualification ?? null }),
+      ...(data.specialization !== undefined && { specialization: data.specialization ?? null }),
+      ...(data.employeeDate !== undefined && { employeeDate: data.employeeDate ? new Date(data.employeeDate) : null }),
     };
 
-    // Keep the linked login account's email in sync when it changes.
     if (data.email !== undefined && data.email && data.email !== existing.email && existing.userId) {
       await prisma.user.update({ where: { id: existing.userId }, data: { email: data.email } });
       updateData.email = data.email;
@@ -90,22 +76,17 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
-    const student = await prisma.student.update({ where: { id }, data: updateData });
-    return NextResponse.json({ student });
+    const teacher = await prisma.teacher.update({ where: { id }, data: updateData });
+    return NextResponse.json({ teacher });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return NextResponse.json({ error: "Student not found" }, { status: 404 });
-      }
+      if (error.code === "P2025") return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
       if (error.code === "P2002") {
-        return NextResponse.json(
-          { error: "A student with this admission number already exists" },
-          { status: 409 }
-        );
+        return NextResponse.json({ error: "A teacher with this email already exists" }, { status: 409 });
       }
     }
-    console.error("Failed to update student:", error);
-    return NextResponse.json({ error: "Failed to update student" }, { status: 500 });
+    console.error("Failed to update teacher:", error);
+    return NextResponse.json({ error: "Failed to update teacher" }, { status: 500 });
   }
 }
 
@@ -119,24 +100,21 @@ export async function DELETE(_req: Request, { params }: RouteCtx) {
   const { id } = await params;
 
   try {
-    const existing = await prisma.student.findFirst({
+    const existing = await prisma.teacher.findFirst({
       where: { id, schoolId },
       select: { id: true, userId: true },
     });
-    if (!existing) {
-      return NextResponse.json({ error: "Student not found" }, { status: 404 });
-    }
+    if (!existing) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
 
-    // Soft-delete the student and deactivate their login account.
     await prisma.$transaction([
-      prisma.student.update({ where: { id }, data: { isActive: false } }),
+      prisma.teacher.update({ where: { id }, data: { isActive: false } }),
       ...(existing.userId
         ? [prisma.user.update({ where: { id: existing.userId }, data: { isActive: false } })]
         : []),
     ]);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete student:", error);
-    return NextResponse.json({ error: "Failed to delete student" }, { status: 500 });
+    console.error("Failed to delete teacher:", error);
+    return NextResponse.json({ error: "Failed to delete teacher" }, { status: 500 });
   }
 }

@@ -261,6 +261,7 @@ model Class {
   category  ClassCategory @default(PRIMARY)
   section   String?
   capacity  Int?
+  isActive  Boolean  @default(true)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
@@ -282,6 +283,7 @@ model Subject {
   name      String
   code      String?
   category  ClassCategory?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -441,6 +443,7 @@ model Announcement {
   priority  String   @default("NORMAL")
   audience  String   @default("ALL")
   published Boolean  @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

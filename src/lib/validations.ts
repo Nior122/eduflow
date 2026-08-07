@@ -1,5 +1,25 @@
 import { z } from "zod";
 
+// ─── Shared validation helper (Phase 1) ──────────────────────────────
+// safeParse + strip: unknown keys are dropped from `data`, so routes can
+// safely spread parsed output into Prisma without mass-assignment risk.
+
+export function validate<T extends z.ZodTypeAny>(schema: T, data: unknown) {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    return {
+      ok: false as const,
+      issues: result.error.issues.map((issue) => ({
+        path: issue.path.join(".") || "root",
+        message: issue.message,
+      })),
+    };
+  }
+  return { ok: true as const, data: result.data as z.infer<T> };
+}
+
+export type ValidationResult<T extends z.ZodTypeAny> = ReturnType<typeof validate<T>>;
+
 // ─── Student ──────────────────────────────────────────────────────────
 
 export const studentSchema = z.object({
@@ -16,6 +36,8 @@ export const studentSchema = z.object({
   medicalInfo: z.string().optional(),
 });
 
+export const studentUpdateSchema = studentSchema.partial();
+
 export type StudentFormData = z.infer<typeof studentSchema>;
 
 // ─── Teacher ──────────────────────────────────────────────────────────
@@ -30,6 +52,8 @@ export const teacherSchema = z.object({
   employeeDate: z.string().optional(),
 });
 
+export const teacherUpdateSchema = teacherSchema.partial();
+
 export type TeacherFormData = z.infer<typeof teacherSchema>;
 
 // ─── Class ───────────────────────────────────────────────────────────
@@ -41,6 +65,8 @@ export const classSchema = z.object({
   capacity: z.coerce.number().optional(),
 });
 
+export const classUpdateSchema = classSchema.partial();
+
 export type ClassFormData = z.infer<typeof classSchema>;
 
 // ─── Subject ─────────────────────────────────────────────────────────
@@ -50,6 +76,8 @@ export const subjectSchema = z.object({
   code: z.string().optional(),
   category: z.enum(["PRIMARY", "JUNIOR_SECONDARY", "SENIOR_SECONDARY"]).optional(),
 });
+
+export const subjectUpdateSchema = subjectSchema.partial();
 
 export type SubjectFormData = z.infer<typeof subjectSchema>;
 
@@ -64,20 +92,34 @@ export const feeSchema = z.object({
   term: z.enum(["FIRST", "SECOND", "THIRD"]).optional(),
 });
 
+export const feeUpdateSchema = feeSchema.partial();
+
 export type FeeFormData = z.infer<typeof feeSchema>;
+
+// ─── Fee payment record ──────────────────────────────────────────────
+
+export const feeRecordSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  amount: z.coerce.number().positive("Amount must be positive"),
+  method: z.enum(["CASH", "BANK_TRANSFER", "CARD", "MOBILE_MONEY", "CHEQUE"]).default("CASH"),
+  status: z.enum(["PAID", "PARTIAL", "PENDING", "OVERDUE", "WAIVED"]).default("PAID"),
+  notes: z.string().optional(),
+});
 
 // ─── Attendance ──────────────────────────────────────────────────────
 
 export const attendanceSchema = z.object({
   date: z.string().min(1, "Date is required"),
   classId: z.string().min(1, "Class is required"),
-  subjectId: z.string().optional(),
-  records: z.array(
-    z.object({
-      studentId: z.string(),
-      status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
-    })
-  ),
+  subjectId: z.string().nullable().optional(),
+  records: z
+    .array(
+      z.object({
+        studentId: z.string().min(1),
+        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
+      })
+    )
+    .min(1, "At least one student record is required"),
 });
 
 export type AttendanceFormData = z.infer<typeof attendanceSchema>;
@@ -89,7 +131,7 @@ export const resultSchema = z.object({
   classId: z.string().min(1, "Class is required"),
   subjectId: z.string().min(1, "Subject is required"),
   term: z.enum(["FIRST", "SECOND", "THIRD"]),
-  session: z.string(),
+  session: z.string().min(4, "Session is required"),
   assignment: z.coerce.number().min(0).max(100).optional(),
   test: z.coerce.number().min(0).max(100).optional(),
   exam: z.coerce.number().min(0).max(100).optional(),
@@ -106,6 +148,8 @@ export const announcementSchema = z.object({
   audience: z.enum(["ALL", "TEACHERS", "PARENTS", "STUDENTS"]).default("ALL"),
 });
 
+export const announcementUpdateSchema = announcementSchema.partial();
+
 export type AnnouncementFormData = z.infer<typeof announcementSchema>;
 
 // ─── Lesson Plan ─────────────────────────────────────────────────────
@@ -119,7 +163,39 @@ export const lessonPlanSchema = z.object({
 
 export type LessonPlanFormData = z.infer<typeof lessonPlanSchema>;
 
-// ─── Login ───────────────────────────────────────────────────────────
+// Saved lesson plan — section fields map 1:1 onto the LessonPlan model.
+
+export const lessonPlanSaveSchema = z.object({
+  subject: z.string().min(1, "Subject is required"),
+  className: z.string().min(1, "Class is required"),
+  topic: z.string().min(1, "Topic is required"),
+  duration: z.string().min(1, "Duration is required"),
+  objectives: z.string().optional(),
+  materials: z.string().optional(),
+  introduction: z.string().optional(),
+  activities: z.string().optional(),
+  teacherActivity: z.string().optional(),
+  studentActivity: z.string().optional(),
+  assessment: z.string().optional(),
+  homework: z.string().optional(),
+});
+
+// ─── Saved AI report comment ─────────────────────────────────────────
+
+export const reportCommentSaveSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  comment: z.string().min(1, "Comment is required"),
+});
+
+// ─── Teacher ↔ class/subject assignment ──────────────────────────────
+
+export const classSubjectSchema = z.object({
+  classId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+  teacherId: z.string().nullable().optional(),
+});
+
+// ─── Auth ────────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -127,8 +203,6 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
-
-// ─── Register ────────────────────────────────────────────────────────
 
 export const registerSchema = z
   .object({
@@ -143,3 +217,21 @@ export const registerSchema = z
   });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+// Registration as a school (used by the public register endpoint)
+
+export const registerSchoolSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  schoolName: z.string().min(2, "School name is required"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Valid email is required"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});

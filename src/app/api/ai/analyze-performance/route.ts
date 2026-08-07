@@ -1,13 +1,34 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
+
+const ANALYZE_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.schoolId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.schoolId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!rateLimit(`ai:${session.user.id}`, { limit: 30, windowMs: 60 * 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
 
   try {
-    const { studentId } = await req.json();
+    const body = await req.json();
+    const parsed = z.object({ studentId: z.string().min(1) }).safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 400 });
+    }
+    const { studentId } = parsed.data;
+
+    // Students may only analyze their own record; staff may analyze any
+    // student in their school.
+    const isSelf = session.user.role === "STUDENT" && session.user.studentId === studentId;
+    if (!isSelf && !(ANALYZE_ROLES as readonly string[]).includes(session.user.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const student = await prisma.student.findUnique({
       where: { id: studentId, schoolId: session.user.schoolId },
@@ -33,14 +54,21 @@ export async function POST(req: Request) {
 
     averages.sort((a, b) => b.avg - a.avg);
     const strengths = averages.slice(0, 2).map((s) => s.subject);
-    const weaknesses = averages.slice(-2).map((s) => s.subject).filter((s) => !strengths.includes(s));
+    const weaknesses = averages
+      .slice(-2)
+      .map((s) => s.subject)
+      .filter((s) => !strengths.includes(s));
 
     const allScores = averages.map((s) => s.avg);
-    const overallAvg = allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
+    const overallAvg =
+      allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
 
-    const attendanceRate = student.attendances.length > 0
-      ? (student.attendances.filter((a) => a.status === "PRESENT").length / student.attendances.length) * 100
-      : 0;
+    const attendanceRate =
+      student.attendances.length > 0
+        ? (student.attendances.filter((a) => a.status === "PRESENT").length /
+            student.attendances.length) *
+          100
+        : 0;
 
     let riskLevel = "LOW";
     if (overallAvg < 50 || attendanceRate < 60) riskLevel = "HIGH";
@@ -76,7 +104,7 @@ export async function POST(req: Request) {
         riskLevel,
         recommendations: recommendations.join("\n"),
         overallScore: Math.round(overallAvg * 10) / 10,
-        teacherId: session.user.teacherId || null,
+        teacherId: session.user.teacherId ?? null,
       },
     });
 
@@ -88,7 +116,8 @@ export async function POST(req: Request) {
       overallScore: Math.round(overallAvg * 10) / 10,
       recommendations,
     });
-  } catch {
+  } catch (error) {
+    console.error("Failed to analyze performance:", error);
     return NextResponse.json({ error: "Failed to analyze" }, { status: 500 });
   }
 }
