@@ -6,7 +6,7 @@ Next.js 15 school management platform with role-based portals for **School Admin
 
 - **Next.js 15** (App Router) + **React 19** + **TypeScript** (strict)
 - **NextAuth v5** (beta) — credentials provider, bcrypt (12 rounds), JWT sessions
-- **Prisma 5** + **PostgreSQL** (Neon-compatible)
+- **Prisma 5** + **PostgreSQL** (Neon-compatible) — 34 models
 - **Tailwind CSS** + Radix UI + shadcn-style components
 - **zod** — server-side request validation
 
@@ -21,7 +21,7 @@ cp .env.example .env.local   # fill in DATABASE_URL (required), AUTH_SECRET, OPE
 
 ```bash
 # First run — create the baseline migration, then apply it:
-npx prisma migrate dev --name phase1_stabilization
+npx prisma migrate dev --name phase2_3
 
 # Or, without migrations history:
 npm run db:push
@@ -78,12 +78,29 @@ npx prisma migrate deploy
 ## Features
 
 - **Auth**: register school, login/logout, role-based page + API authorization (401/403), password reset via email token (or dev link)
-- **Admin**: students (CRUD + search + pagination + one-time login credentials), teachers (CRUD + class/subject assignment), classes, subjects, announcements, fees (fee types + payment recording), reports (top students, weak subjects, finances, attendance trend), dashboard with real stats
-- **Teacher**: attendance (save + prefill), results (save + prefill + term/session), AI lesson plans (generate + save + manage), AI report comments (generate + save + manage)
-- **Student**: dashboard, AI homework assistant, performance analysis
+- **Admin**: students (full profile, CRUD, search, pagination, one-time credentials, status actions, timeline, import/export, ID card), teachers (department, staff ID, assignments), parents (multi-child linking), classes, subjects, departments, academic sessions/terms, classrooms, announcements, fees + payments, reports, school settings, dashboard
+- **Teacher**: attendance (save/prefill/corrections/SICK), results, AI lesson plans + report comments, timetable, assignments + homework (with grading), daily dashboard
+- **Student**: dashboard, AI homework assistant, performance analysis, assignments + homework (submit, track, feedback)
 - **Parent**: multi-child dashboard (results, attendance, fees)
+
+## Phase 2 — School Administration Module
+
+- **Students**: full profile (blood group, religion, nationality, state/LGA, emergency contacts, previous school, medical notes, disabilities), auto admission numbers, status lifecycle (suspend/graduate/transfer/promote/reactivate) with timeline history, bulk CSV import (with auto credentials), CSV export, ID card, advanced filters + pagination.
+- **Teachers**: staff ID, department, years of experience, salary grade, address; department heads.
+- **Parents**: profiles with one-time credentials, multi-child linking.
+- **Departments** (head teacher, subjects), **Academic Sessions** (activate/lock/archive) and **Terms** (single active term per school), **Classrooms** (capacity, room, class/assistant teacher), **School Settings** (identity, colors, currency, time zone, grade system, attendance rules).
+
+## Phase 3 — Academic Operations Module
+
+- **Timetable**: weekly scheduling with automatic conflict detection (class/teacher/room overlap → 409), per-day management, teacher weekly view.
+- **Academic Calendar**: openings, closings, exams, sports, PTA meetings, holidays — shown on dashboards.
+- **Assignments**: teacher CRUD, student submission (locked once graded), grading + feedback, submission tracking.
+- **Homework**: same workflow with review scores and feedback.
+- **Attendance**: SICK status, corrections, staff (teacher) attendance, per-student summaries with weekly/monthly/term ranges and CSV export.
+- **Teacher daily dashboard**: today's classes from the timetable, pending attendance, grading queue, upcoming events.
 
 ## Notes
 
 - AI routes are rate-limited (in-memory, per instance) — swap `src/lib/rate-limit.ts` for a shared store (e.g. Upstash Redis) before horizontal scaling.
+- File attachments on assignments/homework are stored as URLs/text — a real upload endpoint (e.g. Vercel Blob) can be added without schema changes.
 - No files are uploaded yet; the UI renders user and AI content as escaped text (no `dangerouslySetInnerHTML`).
