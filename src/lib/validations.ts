@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// ─── Shared validation helper (Phase 1) ──────────────────────────────
+// ─── Shared validation helper ────────────────────────────────────────
 // safeParse + strip: unknown keys are dropped from `data`, so routes can
 // safely spread parsed output into Prisma without mass-assignment risk.
 
@@ -24,21 +24,62 @@ export type ValidationResult<T extends z.ZodTypeAny> = ReturnType<typeof validat
 
 export const studentSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
+  middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  bloodGroup: z.string().optional(),
+  religion: z.string().optional(),
+  nationality: z.string().optional(),
+  state: z.string().optional(),
+  lga: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
-  admissionNumber: z.string().min(1, "Admission number is required"),
+  admissionNumber: z.string().optional(),
   classId: z.string().optional(),
   parentId: z.string().optional(),
+  parentRelation: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  previousSchool: z.string().optional(),
   medicalInfo: z.string().optional(),
+  disabilities: z.string().optional(),
+  admissionStatus: z.enum(["ACTIVE", "SUSPENDED", "GRADUATED", "TRANSFERRED", "WITHDRAWN"]).optional(),
 });
 
 export const studentUpdateSchema = studentSchema.partial();
 
 export type StudentFormData = z.infer<typeof studentSchema>;
+
+export const studentStatusActionSchema = z.object({
+  action: z.enum(["SUSPEND", "GRADUATE", "TRANSFER", "PROMOTE", "REACTIVATE"]),
+  note: z.string().optional(),
+  newClassId: z.string().optional(),
+});
+
+export type StudentStatusAction = z.infer<typeof studentStatusActionSchema>;
+
+// Bulk import rows (client sends parsed CSV rows as JSON)
+export const studentImportSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        admissionNumber: z.string().optional(),
+        firstName: z.string().min(1, "First name is required"),
+        lastName: z.string().min(1, "Last name is required"),
+        middleName: z.string().optional(),
+        email: z.string().email().optional().or(z.literal("")),
+        phone: z.string().optional(),
+        gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+        dateOfBirth: z.string().optional(),
+        className: z.string().optional(),
+        parentRelation: z.string().optional(),
+      })
+    )
+    .min(1, "At least one row is required")
+    .max(500, "Maximum 500 rows per import"),
+});
 
 // ─── Teacher ──────────────────────────────────────────────────────────
 
@@ -47,14 +88,35 @@ export const teacherSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Valid email is required"),
   phone: z.string().optional(),
+  address: z.string().optional(),
   qualification: z.string().optional(),
   specialization: z.string().optional(),
   employeeDate: z.string().optional(),
+  staffId: z.string().optional(),
+  yearsOfExperience: z.coerce.number().int().min(0).optional(),
+  salaryGrade: z.string().optional(),
+  departmentId: z.string().optional(),
 });
 
 export const teacherUpdateSchema = teacherSchema.partial();
 
 export type TeacherFormData = z.infer<typeof teacherSchema>;
+
+// ─── Parent ───────────────────────────────────────────────────────────
+
+export const parentSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().optional(),
+  occupation: z.string().optional(),
+  address: z.string().optional(),
+  studentIds: z.array(z.string()).optional(),
+});
+
+export const parentUpdateSchema = parentSchema.partial();
+
+export type ParentFormData = z.infer<typeof parentSchema>;
 
 // ─── Class ───────────────────────────────────────────────────────────
 
@@ -75,11 +137,75 @@ export const subjectSchema = z.object({
   name: z.string().min(1, "Subject name is required"),
   code: z.string().optional(),
   category: z.enum(["PRIMARY", "JUNIOR_SECONDARY", "SENIOR_SECONDARY"]).optional(),
+  departmentId: z.string().optional(),
 });
 
 export const subjectUpdateSchema = subjectSchema.partial();
 
 export type SubjectFormData = z.infer<typeof subjectSchema>;
+
+// ─── Department ──────────────────────────────────────────────────────
+
+export const departmentSchema = z.object({
+  name: z.string().min(1, "Department name is required"),
+  code: z.string().optional(),
+  description: z.string().optional(),
+  headTeacherId: z.string().nullable().optional(),
+});
+
+export const departmentUpdateSchema = departmentSchema.partial();
+
+// ─── Academic session / term ─────────────────────────────────────────
+
+export const sessionSchema = z.object({
+  name: z.string().min(4, "Session name is required (e.g. 2026/2027)"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export const sessionUpdateSchema = sessionSchema.partial();
+
+export const termSchema = z.object({
+  sessionId: z.string().min(1, "Session is required"),
+  name: z.enum(["FIRST", "SECOND", "THIRD"]),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export const termUpdateSchema = termSchema.partial();
+
+// ─── Classroom ───────────────────────────────────────────────────────
+
+export const classroomSchema = z.object({
+  name: z.string().min(1, "Classroom name is required"),
+  roomNumber: z.string().optional(),
+  location: z.string().optional(),
+  capacity: z.coerce.number().int().min(1).optional(),
+  classId: z.string().nullable().optional(),
+  classTeacherId: z.string().nullable().optional(),
+  assistantTeacherId: z.string().nullable().optional(),
+});
+
+export const classroomUpdateSchema = classroomSchema.partial();
+
+// ─── School settings ─────────────────────────────────────────────────
+
+export const schoolSettingsSchema = z.object({
+  name: z.string().min(1).optional(),
+  logo: z.string().optional(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  website: z.string().optional(),
+  motto: z.string().optional(),
+  principal: z.string().optional(),
+  currency: z.string().min(1).optional(),
+  timeZone: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  gradeSystem: z.string().optional(),
+  attendanceRules: z.string().optional(),
+});
 
 // ─── Fee ─────────────────────────────────────────────────────────────
 
@@ -90,6 +216,7 @@ export const feeSchema = z.object({
   dueDate: z.string().optional(),
   isOptional: z.boolean().default(false),
   term: z.enum(["FIRST", "SECOND", "THIRD"]).optional(),
+  session: z.string().optional(),
 });
 
 export const feeUpdateSchema = feeSchema.partial();
@@ -217,8 +344,6 @@ export const registerSchema = z
   });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
-
-// Registration as a school (used by the public register endpoint)
 
 export const registerSchoolSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

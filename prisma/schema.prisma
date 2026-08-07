@@ -58,6 +58,14 @@ enum ClassCategory {
   SENIOR_SECONDARY
 }
 
+enum StudentAdmissionStatus {
+  ACTIVE
+  SUSPENDED
+  GRADUATED
+  TRANSFERRED
+  WITHDRAWN
+}
+
 // ─── USER & AUTH ─────────────────────────────────────────────────────
 
 model User {
@@ -140,6 +148,13 @@ model School {
   website   String?
   logo      String?
   motto     String?
+  principal String?
+  currency  String   @default("NGN")
+  timeZone  String?
+  primaryColor   String?
+  secondaryColor String?
+  gradeSystem    String?   @db.Text
+  attendanceRules String?  @db.Text
   category  ClassCategory @default(PRIMARY)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -154,6 +169,10 @@ model School {
   payments      Payment[]
   announcements Announcement[]
   lessonPlans   LessonPlan[]
+  departments  Department[]
+  sessions     AcademicSession[]
+  terms        AcademicTerm[]
+  classrooms   Classroom[]
 
   @@index([slug])
 }
@@ -172,8 +191,23 @@ model Student {
   admissionNumber String     @unique
   enrollmentDate  DateTime   @default(now())
   medicalInfo     String?
+  middleName      String?
+  bloodGroup      String?
+  religion        String?
+  nationality     String?
+  state           String?
+  lga             String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  previousSchool        String?
+  disabilities          String?
   profileImage    String?
   isActive        Boolean    @default(true)
+  admissionStatus StudentAdmissionStatus @default(ACTIVE)
+  suspendedAt     DateTime?
+  graduatedAt     DateTime?
+  transferredAt   DateTime?
+  promotedAt      DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -182,6 +216,7 @@ model Student {
   classId       String?
   class         Class?              @relation(fields: [classId], references: [id])
   parentId      String?
+  parentRelation String?
   parent        Parent?             @relation(fields: [parentId], references: [id])
   userId        String?             @unique
   user          User?               @relation(fields: [userId], references: [id])
@@ -190,11 +225,13 @@ model Student {
   feeRecords    FeeRecord[]
   aiReports     AIReportComment[]
   performanceAnalyses PerformanceAnalysis[]
+  timeline StudentTimeline[]
 
   @@index([admissionNumber])
   @@index([schoolId])
   @@index([classId])
   @@index([parentId])
+  @@index([admissionStatus])
 }
 
 // ─── TEACHER ────────────────────────────────────────────────────────
@@ -208,6 +245,12 @@ model Teacher {
   employeeDate   DateTime @default(now())
   qualification  String?
   specialization String?
+  staffId           String?   @unique
+  yearsOfExperience Int?
+  salaryGrade       String?
+  address           String?
+  departmentId      String?
+  department        Department? @relation("TeacherMembership", fields: [departmentId], references: [id])
   profileImage   String?
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -223,9 +266,13 @@ model Teacher {
   lessonPlans   LessonPlan[]
   comments      AIReportComment[]
   performances  PerformanceAnalysis[]
+  headedDepartments     Department[] @relation("DepartmentHead")
+  classroomsTaught      Classroom[] @relation("ClassroomClassTeacher")
+  classroomsAssistant   Classroom[] @relation("ClassroomAssistantTeacher")
 
   @@index([email])
   @@index([schoolId])
+  @@index([departmentId])
 }
 
 // ─── PARENT ─────────────────────────────────────────────────────────
@@ -271,6 +318,7 @@ model Class {
   classSubjects ClassSubject[]
   attendances   Attendance[]
   results       Result[]
+  classrooms    Classroom[]
 
   @@unique([name, schoolId])
   @@index([schoolId])
@@ -283,6 +331,8 @@ model Subject {
   name      String
   code      String?
   category  ClassCategory?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -547,4 +597,99 @@ model PerformanceAnalysis {
   teacher   Teacher? @relation(fields: [teacherId], references: [id])
 
   @@index([studentId])
+}
+
+
+// ─── PHASE 2: ACADEMIC STRUCTURE ─────────────────────────────────────
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  code        String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id])
+  headTeacherId String?
+  headTeacher   Teacher?  @relation("DepartmentHead", fields: [headTeacherId], references: [id])
+  teachers      Teacher[] @relation("TeacherMembership")
+  subjects      Subject[]
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+}
+
+model AcademicSession {
+  id         String   @id @default(cuid())
+  name       String
+  startDate  DateTime?
+  endDate    DateTime?
+  isActive   Boolean  @default(false)
+  isLocked   Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schoolId String
+  school   School         @relation(fields: [schoolId], references: [id])
+  terms    AcademicTerm[]
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+}
+
+model AcademicTerm {
+  id        String   @id @default(cuid())
+  name      Term
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessionId String
+  session   AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, name])
+  @@index([sessionId])
+}
+
+model Classroom {
+  id                 String   @id @default(cuid())
+  name               String
+  roomNumber         String?
+  location           String?
+  capacity           Int?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  schoolId           String
+  school             School   @relation(fields: [schoolId], references: [id])
+  classId            String?
+  class              Class?   @relation(fields: [classId], references: [id])
+  classTeacherId     String?
+  classTeacher       Teacher? @relation("ClassroomClassTeacher", fields: [classTeacherId], references: [id])
+  assistantTeacherId String?
+  assistantTeacher   Teacher? @relation("ClassroomAssistantTeacher", fields: [assistantTeacherId], references: [id])
+
+  @@index([schoolId])
+  @@index([classId])
+  @@index([classTeacherId])
+}
+
+model StudentTimeline {
+  id        String   @id @default(cuid())
+  event     String
+  note      String?
+  createdAt DateTime @default(now())
+
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([createdAt])
 }
