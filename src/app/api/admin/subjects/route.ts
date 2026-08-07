@@ -41,6 +41,10 @@ export async function POST(req: Request) {
         name: data.name,
         code: data.code ?? null,
         category: data.category ?? null,
+        departmentId: data.departmentId ?? null,
+        description: data.description ?? null,
+        passMark: data.passMark ?? null,
+        creditUnit: data.creditUnit ?? null,
         schoolId,
       },
     });

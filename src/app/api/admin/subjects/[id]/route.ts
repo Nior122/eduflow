@@ -29,6 +29,10 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
       ...(data.name !== undefined && { name: data.name }),
       ...(data.code !== undefined && { code: data.code ?? null }),
       ...(data.category !== undefined && { category: data.category ?? null }),
+      ...(data.departmentId !== undefined && { departmentId: data.departmentId ?? null }),
+      ...(data.description !== undefined && { description: data.description ?? null }),
+      ...(data.passMark !== undefined && { passMark: data.passMark }),
+      ...(data.creditUnit !== undefined && { creditUnit: data.creditUnit }),
     };
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

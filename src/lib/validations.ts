@@ -138,6 +138,9 @@ export const subjectSchema = z.object({
   code: z.string().optional(),
   category: z.enum(["PRIMARY", "JUNIOR_SECONDARY", "SENIOR_SECONDARY"]).optional(),
   departmentId: z.string().optional(),
+  description: z.string().optional(),
+  passMark: z.coerce.number().int().min(0).max(100).optional(),
+  creditUnit: z.coerce.number().int().min(1).optional(),
 });
 
 export const subjectUpdateSchema = subjectSchema.partial();
@@ -255,7 +258,7 @@ export const attendanceSchema = z.object({
     .array(
       z.object({
         studentId: z.string().min(1),
-        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
+        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "SICK"]),
       })
     )
     .min(1, "At least one student record is required"),
@@ -372,3 +375,87 @@ export const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
+
+
+// ─── Phase 3: academic operations ─────────────────────────────────────
+
+export const timetableEntrySchema = z.object({
+  day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM format"),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM format"),
+  classId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+  teacherId: z.string().nullable().optional(),
+  classroomId: z.string().nullable().optional(),
+  sessionId: z.string().nullable().optional(),
+  termId: z.string().nullable().optional(),
+}).refine((d) => d.startTime < d.endTime, {
+  message: "End time must be after start time",
+  path: ["endTime"],
+});
+
+export const calendarEventSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  eventDate: z.string().min(1, "Date is required"),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  type: z.enum(["EXAM", "SCHOOL_OPENING", "SCHOOL_CLOSING", "SPORTS", "PTA_MEETING", "HOLIDAY", "ASSIGNMENT", "EVENT"]).default("EVENT"),
+  classId: z.string().nullable().optional(),
+});
+
+export const calendarEventUpdateSchema = calendarEventSchema.partial();
+
+export const assignmentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  dueDate: z.string().min(1, "Due date is required"),
+  maxScore: z.coerce.number().int().min(1).optional(),
+  attachments: z.string().optional(),
+  classId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+});
+
+export const assignmentUpdateSchema = assignmentSchema.partial();
+
+export const submissionSchema = z.object({
+  content: z.string().min(1, "Submission content is required"),
+});
+
+export const gradeSubmissionSchema = z.object({
+  grade: z.coerce.number().int().min(0).max(100),
+  feedback: z.string().optional(),
+});
+
+export const homeworkSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  dueDate: z.string().min(1, "Due date is required"),
+  attachments: z.string().optional(),
+  classId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+});
+
+export const homeworkUpdateSchema = homeworkSchema.partial();
+
+export const homeworkSubmissionSchema = z.object({
+  content: z.string().min(1, "Submission content is required"),
+});
+
+export const staffAttendanceSchema = z.object({
+  date: z.string().min(1, "Date is required"),
+  records: z
+    .array(
+      z.object({
+        teacherId: z.string().min(1),
+        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "SICK"]),
+      })
+    )
+    .min(1, "At least one teacher record is required"),
+});
+
+export const attendanceCorrectionSchema = z.object({
+  status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "SICK"]),
+  remark: z.string().optional(),
+});
+

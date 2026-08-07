@@ -22,6 +22,7 @@ enum AttendanceStatus {
   ABSENT
   LATE
   EXCUSED
+  SICK
 }
 
 enum FeeStatus {
@@ -331,6 +332,9 @@ model Subject {
   name      String
   code      String?
   category  ClassCategory?
+  description String?
+  passMark    Int?
+  creditUnit  Int?
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
   isActive  Boolean  @default(true)
@@ -692,4 +696,183 @@ model StudentTimeline {
 
   @@index([studentId])
   @@index([createdAt])
+}
+
+
+// ─── PHASE 3: ACADEMIC OPERATIONS ─────────────────────────────────────
+
+model TimetableEntry {
+  id        String   @id @default(cuid())
+  day       String
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schoolId    String
+  school      School          @relation(fields: [schoolId], references: [id])
+  classId     String
+  class       Class           @relation(fields: [classId], references: [id])
+  subjectId   String
+  subject     Subject         @relation(fields: [subjectId], references: [id])
+  teacherId   String?
+  teacher     Teacher?        @relation(fields: [teacherId], references: [id])
+  classroomId String?
+  classroom   Classroom?      @relation(fields: [classroomId], references: [id])
+  sessionId   String?
+  session     AcademicSession? @relation(fields: [sessionId], references: [id])
+  termId      String?
+  term        AcademicTerm?    @relation(fields: [termId], references: [id])
+
+  @@index([schoolId, day])
+  @@index([classId, day])
+  @@index([teacherId, day])
+  @@index([classroomId, day])
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  startTime   String?
+  endTime     String?
+  type        String   @default("EVENT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id])
+  classId  String?
+  class    Class?  @relation(fields: [classId], references: [id])
+
+  @@index([schoolId, eventDate])
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  dueDate     DateTime
+  maxScore    Int?
+  attachments String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId  String
+  school    School  @relation(fields: [schoolId], references: [id])
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+
+  submissions AssignmentSubmission[]
+
+  @@index([schoolId])
+  @@index([classId])
+  @@index([teacherId])
+}
+
+model AssignmentSubmission {
+  id          String   @id @default(cuid())
+  content     String?  @db.Text
+  attachments String?  @db.Text
+  submittedAt DateTime @default(now())
+  grade       Int?
+  feedback    String?  @db.Text
+  gradedAt    DateTime?
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+}
+
+model Homework {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  dueDate     DateTime
+  attachments String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId  String
+  school    School  @relation(fields: [schoolId], references: [id])
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+
+  submissions HomeworkSubmission[]
+
+  @@index([schoolId])
+  @@index([classId])
+}
+
+model HomeworkSubmission {
+  id          String   @id @default(cuid())
+  content     String?  @db.Text
+  attachments String?  @db.Text
+  submittedAt DateTime @default(now())
+  grade       Int?
+  feedback    String?  @db.Text
+  gradedAt    DateTime?
+
+  homeworkId String
+  homework   Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([homeworkId, studentId])
+  @@index([studentId])
+}
+
+model StaffAttendance {
+  id         String           @id @default(cuid())
+  date       DateTime
+  status     AttendanceStatus @default(PRESENT)
+  remark     String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id])
+  schoolId   String
+  school     School   @relation(fields: [schoolId], references: [id])
+  markedById String?
+  markedBy   User?    @relation(fields: [markedById], references: [id])
+
+  @@unique([teacherId, date])
+  @@index([schoolId, date])
+}
+
+model TeacherAssignment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacherId String
+  teacher   Teacher          @relation(fields: [teacherId], references: [id])
+  classId   String
+  class     Class            @relation(fields: [classId], references: [id])
+  subjectId String
+  subject   Subject          @relation(fields: [subjectId], references: [id])
+  sessionId String?
+  session   AcademicSession? @relation(fields: [sessionId], references: [id])
+  termId    String?
+  term      AcademicTerm?    @relation(fields: [termId], references: [id])
+  schoolId  String
+  school    School           @relation(fields: [schoolId], references: [id])
+
+  @@unique([teacherId, classId, subjectId, sessionId, termId])
+  @@index([teacherId])
+  @@index([classId, subjectId])
 }

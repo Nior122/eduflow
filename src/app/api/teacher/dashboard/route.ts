@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+
 export async function GET() {
   const session = await auth();
   const denied = requireRole(session, ["TEACHER"], { schoolScoped: true });
@@ -11,26 +13,42 @@ export async function GET() {
   if (!teacherId || !schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
+    const now = new Date();
+    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+    const todayName = DAYS[now.getDay()];
+
     const classSubjects = await prisma.classSubject.findMany({
       where: { teacherId },
       include: { class: true, subject: true },
     });
     const classIds = classSubjects.map((cs) => cs.classId);
 
-    const [studentsCount, todayAttendances] = await Promise.all([
+    const [studentsCount, todayAttendances, todayClasses, upcomingEvents, gradingQueue, pendingHomework] = await Promise.all([
       prisma.student.count({
-        where: {
-          schoolId,
-          isActive: true,
-          classId: { in: classIds },
-        },
+        where: { schoolId, isActive: true, classId: { in: classIds } },
       }),
       prisma.attendance.findMany({
-        where: {
-          teacherId,
-          date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        where: { teacherId, date: { gte: startOfToday } },
+        select: { status: true, classId: true },
+      }),
+      prisma.timetableEntry.findMany({
+        where: { schoolId, teacherId, day: todayName },
+        include: {
+          class: { select: { id: true, name: true } },
+          subject: { select: { id: true, name: true } },
         },
-        select: { status: true },
+        orderBy: { startTime: "asc" },
+      }),
+      prisma.calendarEvent.findMany({
+        where: { schoolId, eventDate: { gte: startOfToday } },
+        orderBy: { eventDate: "asc" },
+        take: 5,
+      }),
+      prisma.assignmentSubmission.count({
+        where: { assignment: { schoolId, teacherId }, grade: null },
+      }),
+      prisma.homeworkSubmission.count({
+        where: { homework: { schoolId, teacherId }, grade: null },
       }),
     ]);
 
@@ -42,11 +60,30 @@ export async function GET() {
         ? Math.round((present / todayAttendances.length) * 100)
         : 0;
 
+    // Classes in today's timetable that still have no attendance recorded today.
+    const attendedClassIds = new Set(todayAttendances.map((a) => a.classId));
+    const pendingAttendance = todayClasses.filter((t) => !attendedClassIds.has(t.classId)).length;
+
     return NextResponse.json({
       students: studentsCount,
       classes: classes.length,
       subjects: subjects.length,
       attendanceToday,
+      pendingAttendance,
+      awaitingGrading: gradingQueue + pendingHomework,
+      todayClasses: todayClasses.map((t) => ({
+        id: t.id,
+        startTime: t.startTime,
+        endTime: t.endTime,
+        subject: t.subject.name,
+        className: t.class.name,
+      })),
+      upcomingEvents: upcomingEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        eventDate: e.eventDate.toISOString(),
+      })),
     });
   } catch (error) {
     console.error("Failed to load teacher dashboard:", error);
