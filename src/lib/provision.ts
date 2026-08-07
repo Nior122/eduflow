@@ -11,8 +11,14 @@ export function generateReference(prefix: string): string {
   return `${prefix}_${randomBytes(8).toString("hex")}`;
 }
 
+/** Auto-generated admission number, e.g. ADM-2026-4F2A9B. */
+export function generateAdmissionNumber(): string {
+  const year = new Date().getFullYear();
+  return `ADM-${year}-${randomBytes(3).toString("hex").toUpperCase()}`;
+}
+
 /**
- * Creates a login account (User row) for a newly created student/teacher.
+ * Creates a login account (User row) for a newly created student/teacher/parent.
  * Uses the provided email when available, otherwise a deterministic auto
  * address scoped to the school. The generated temp password is returned
  * exactly once to the caller (the admin UI shows it in a dialog).

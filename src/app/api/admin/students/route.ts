@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, studentSchema } from "@/lib/validations";
-import { provisionUser } from "@/lib/provision";
+import { provisionUser, generateAdmissionNumber } from "@/lib/provision";
 import { Prisma } from "@prisma/client";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
@@ -17,14 +17,15 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const classId = searchParams.get("classId");
   const search = searchParams.get("search");
+  const status = searchParams.get("status");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50")));
 
   const where: Record<string, unknown> = {
     schoolId,
-    isActive: true,
   };
-
+  if (status && status !== "all") where.admissionStatus = status;
+  if (!status || status === "all") where.isActive = true;
   if (classId) where.classId = classId;
   if (search) {
     where.OR = [
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
-    // Student + login account in one transaction; temp password returned once.
+    // Student + login account + timeline entry in one transaction.
     const { student, creds } = await prisma.$transaction(async (tx) => {
       const creds = await provisionUser(
         {
@@ -88,19 +89,33 @@ export async function POST(req: Request) {
       const student = await tx.student.create({
         data: {
           firstName: data.firstName,
+          middleName: data.middleName ?? null,
           lastName: data.lastName,
           dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
           gender: data.gender ?? null,
+          bloodGroup: data.bloodGroup ?? null,
+          religion: data.religion ?? null,
+          nationality: data.nationality ?? null,
+          state: data.state ?? null,
+          lga: data.lga ?? null,
           address: data.address ?? null,
           phone: data.phone ?? null,
           email: creds.loginEmail,
-          admissionNumber: data.admissionNumber,
+          admissionNumber: data.admissionNumber || generateAdmissionNumber(),
           classId: data.classId ?? null,
           parentId: data.parentId ?? null,
+          parentRelation: data.parentRelation ?? null,
+          emergencyContactName: data.emergencyContactName ?? null,
+          emergencyContactPhone: data.emergencyContactPhone ?? null,
+          previousSchool: data.previousSchool ?? null,
           medicalInfo: data.medicalInfo ?? null,
+          disabilities: data.disabilities ?? null,
           schoolId,
           userId: creds.userId,
         },
+      });
+      await tx.studentTimeline.create({
+        data: { studentId: student.id, event: "Admitted", note: "Student registered" },
       });
       return { student, creds };
     });

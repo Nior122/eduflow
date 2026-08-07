@@ -19,6 +19,7 @@ export async function GET() {
     const [
       totalStudents,
       totalTeachers,
+      totalParents,
       totalClasses,
       studentsRecent,
       studentsPrev,
@@ -29,9 +30,11 @@ export async function GET() {
       feeTotal,
       results,
       recentActivities,
+      recentAdmissions,
     ] = await Promise.all([
       prisma.student.count({ where: { schoolId, isActive: true } }),
       prisma.teacher.count({ where: { schoolId, isActive: true } }),
+      prisma.parent.count({ where: { schoolId, isActive: true } }),
       prisma.class.count({ where: { schoolId, isActive: true } }),
       prisma.student.count({ where: { schoolId, isActive: true, createdAt: { gte: monthAgo } } }),
       prisma.student.count({
@@ -48,7 +51,7 @@ export async function GET() {
       }),
       prisma.feeRecord.findMany({
         where: { fee: { schoolId } },
-        select: { amount: true, status: true },
+        select: { amount: true, status: true, fee: { select: { amount: true } } },
       }),
       prisma.fee.aggregate({
         where: { schoolId, isActive: true },
@@ -65,24 +68,30 @@ export async function GET() {
         take: 5,
         select: { id: true, title: true, content: true, createdAt: true },
       }),
+      prisma.student.findMany({
+        where: { schoolId, isActive: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, firstName: true, lastName: true, admissionNumber: true, createdAt: true },
+      }),
     ]);
 
-    // Attendance rate (last 100 records)
     const presentCount = recentAttendances.filter((a) => a.status === "PRESENT").length;
     const attendanceRate =
       recentAttendances.length > 0
         ? Math.round((presentCount / recentAttendances.length) * 100)
         : 0;
 
-    // Fee collection rate — real money ratio (paid sum / expected sum)
-    const paidSum = feeRecords
+    // Real money: revenue = paid/waived sums; outstanding = pending/partial balances.
+    const revenue = feeRecords
       .filter((r) => r.status === "PAID" || r.status === "WAIVED")
       .reduce((s, r) => s + Number(r.amount), 0);
     const expectedSum = feeRecords.reduce((s, r) => s + Number(r.amount), 0);
-    const feeCollection =
-      expectedSum > 0 ? Math.round((paidSum / expectedSum) * 100) : 0;
+    const outstanding = feeRecords
+      .filter((r) => r.status === "PENDING" || r.status === "PARTIAL")
+      .reduce((s, r) => s + Math.max(0, Number(r.fee.amount) - Number(r.amount)), 0);
+    const feeCollection = expectedSum > 0 ? Math.round((revenue / expectedSum) * 100) : 0;
 
-    // Average performance
     const totals = results.map((r) => Number(r.total)).filter((t) => !isNaN(t));
     const performanceAvg =
       totals.length > 0
@@ -93,10 +102,13 @@ export async function GET() {
       stats: {
         totalStudents,
         totalTeachers,
+        totalParents,
         totalClasses,
         attendanceRate,
         feeCollection,
         performanceAvg,
+        revenue,
+        outstanding,
         studentTrend: trendOf(studentsPrev, studentsRecent),
         teacherTrend: trendOf(teachersPrev, teachersRecent),
       },
@@ -107,6 +119,12 @@ export async function GET() {
         time: formatRelativeTime(a.createdAt),
         type: "announcement",
       })),
+      recentAdmissions: recentAdmissions.map((s) => ({
+        id: s.id,
+        name: `${s.firstName} ${s.lastName}`,
+        admissionNumber: s.admissionNumber,
+        createdAt: s.createdAt.toISOString(),
+      })),
       feeTotal: Number(feeTotal._sum.amount ?? 0),
     });
   } catch (error) {
@@ -115,7 +133,6 @@ export async function GET() {
   }
 }
 
-/** Percent change vs the previous window; null when there is no baseline. */
 function trendOf(prev: number, recent: number): number | null {
   if (prev <= 0) return recent > 0 ? 100 : null;
   return Math.round(((recent - prev) / prev) * 100);

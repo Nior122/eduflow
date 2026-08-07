@@ -20,6 +20,7 @@ export async function GET() {
       classSubjects: {
         include: { class: { select: { id: true, name: true } }, subject: { select: { id: true, name: true } } },
       },
+      department: { select: { id: true, name: true } },
       _count: { select: { attendances: true, results: true, lessonPlans: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -43,6 +44,14 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
+    if (data.departmentId) {
+      const dept = await prisma.department.findFirst({
+        where: { id: data.departmentId, schoolId, isActive: true },
+        select: { id: true },
+      });
+      if (!dept) return NextResponse.json({ error: "Department not found" }, { status: 404 });
+    }
+
     // Teacher + login account in one transaction; temp password returned once.
     const { teacher, creds } = await prisma.$transaction(async (tx) => {
       const creds = await provisionUser(
@@ -61,9 +70,14 @@ export async function POST(req: Request) {
           lastName: data.lastName,
           email: creds.loginEmail,
           phone: data.phone ?? null,
+          address: data.address ?? null,
           qualification: data.qualification ?? null,
           specialization: data.specialization ?? null,
           employeeDate: data.employeeDate ? new Date(data.employeeDate) : new Date(),
+          staffId: data.staffId ?? null,
+          yearsOfExperience: data.yearsOfExperience ?? null,
+          salaryGrade: data.salaryGrade ?? null,
+          departmentId: data.departmentId ?? null,
           schoolId,
           userId: creds.userId,
         },
@@ -77,7 +91,10 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return NextResponse.json({ error: "A teacher with this email already exists" }, { status: 409 });
+      return NextResponse.json(
+        { error: "A teacher with this email or staff ID already exists" },
+        { status: 409 }
+      );
     }
     console.error("Failed to create teacher:", error);
     return NextResponse.json({ error: "Failed to create teacher" }, { status: 500 });

@@ -163,7 +163,14 @@ export const sessionSchema = z.object({
   endDate: z.string().optional(),
 });
 
-export const sessionUpdateSchema = sessionSchema.partial();
+export const sessionUpdateSchema = z.object({
+  name: z.string().min(4, "Session name is required (e.g. 2026/2027)").optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isActive: z.boolean().optional(),
+  isLocked: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+});
 
 export const termSchema = z.object({
   sessionId: z.string().min(1, "Session is required"),
@@ -172,7 +179,12 @@ export const termSchema = z.object({
   endDate: z.string().optional(),
 });
 
-export const termUpdateSchema = termSchema.partial();
+export const termUpdateSchema = z.object({
+  name: z.enum(["FIRST", "SECOND", "THIRD"]).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
 
 // ─── Classroom ───────────────────────────────────────────────────────
 

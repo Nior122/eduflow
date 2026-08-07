@@ -28,6 +28,7 @@ export async function GET(_req: Request, { params }: RouteCtx) {
         feeRecords: { include: { fee: true }, orderBy: { createdAt: "desc" } },
         aiReports: { orderBy: { createdAt: "desc" }, take: 5 },
         performanceAnalyses: { orderBy: { createdAt: "desc" }, take: 5 },
+        timeline: { orderBy: { createdAt: "desc" }, take: 30 },
       },
     });
 
@@ -69,15 +70,27 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
 
     const updateData: Prisma.StudentUpdateInput = {
       ...(data.firstName !== undefined && { firstName: data.firstName }),
+      ...(data.middleName !== undefined && { middleName: data.middleName ?? null }),
       ...(data.lastName !== undefined && { lastName: data.lastName }),
       ...(data.dateOfBirth !== undefined && { dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null }),
       ...(data.gender !== undefined && { gender: data.gender }),
+      ...(data.bloodGroup !== undefined && { bloodGroup: data.bloodGroup ?? null }),
+      ...(data.religion !== undefined && { religion: data.religion ?? null }),
+      ...(data.nationality !== undefined && { nationality: data.nationality ?? null }),
+      ...(data.state !== undefined && { state: data.state ?? null }),
+      ...(data.lga !== undefined && { lga: data.lga ?? null }),
       ...(data.address !== undefined && { address: data.address ?? null }),
       ...(data.phone !== undefined && { phone: data.phone ?? null }),
       ...(data.admissionNumber !== undefined && { admissionNumber: data.admissionNumber }),
       ...(data.classId !== undefined && { classId: data.classId ?? null }),
       ...(data.parentId !== undefined && { parentId: data.parentId ?? null }),
+      ...(data.parentRelation !== undefined && { parentRelation: data.parentRelation ?? null }),
+      ...(data.emergencyContactName !== undefined && { emergencyContactName: data.emergencyContactName ?? null }),
+      ...(data.emergencyContactPhone !== undefined && { emergencyContactPhone: data.emergencyContactPhone ?? null }),
+      ...(data.previousSchool !== undefined && { previousSchool: data.previousSchool ?? null }),
       ...(data.medicalInfo !== undefined && { medicalInfo: data.medicalInfo ?? null }),
+      ...(data.disabilities !== undefined && { disabilities: data.disabilities ?? null }),
+      ...(data.admissionStatus !== undefined && { admissionStatus: data.admissionStatus }),
     };
 
     // Keep the linked login account's email in sync when it changes.
@@ -127,12 +140,18 @@ export async function DELETE(_req: Request, { params }: RouteCtx) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    // Soft-delete the student and deactivate their login account.
+    // Soft-delete the student, deactivate their login, and log it.
     await prisma.$transaction([
-      prisma.student.update({ where: { id }, data: { isActive: false } }),
+      prisma.student.update({
+        where: { id },
+        data: { isActive: false, admissionStatus: "WITHDRAWN" },
+      }),
       ...(existing.userId
         ? [prisma.user.update({ where: { id: existing.userId }, data: { isActive: false } })]
         : []),
+      prisma.studentTimeline.create({
+        data: { studentId: id, event: "Withdrawn", note: "Student removed by school admin" },
+      }),
     ]);
     return NextResponse.json({ success: true });
   } catch (error) {
