@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Users, BookOpen, ClipboardCheck, Brain, FileSpreadsheet,
-  Clock, ArrowUpRight, Sparkles,
+  Users, BookOpen, ClipboardCheck, Brain, FileSpreadsheet, Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

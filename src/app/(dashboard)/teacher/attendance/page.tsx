@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +11,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { CalendarDays, CheckCircle2, XCircle, Clock, AlertCircle, Save, Loader2 } from "lucide-react";
+import { CalendarDays, Save, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Student = {
@@ -31,6 +30,7 @@ export default function AttendancePage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [records, setRecords] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [prefillLoading, setPrefillLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -61,6 +61,27 @@ export default function AttendancePage() {
       .catch(() => {});
   }, [selectedClass]);
 
+  // Prefill saved attendance for the selected class/date/subject
+  useEffect(() => {
+    if (!selectedClass || !selectedDate || students.length === 0) return;
+    setPrefillLoading(true);
+    const params = new URLSearchParams({ classId: selectedClass, date: selectedDate });
+    if (selectedSubject) params.set("subjectId", selectedSubject);
+    fetch(`/api/attendance?${params}`)
+      .then(r => r.ok && r.json())
+      .then(d => {
+        setRecords((prev) => {
+          const next = { ...prev };
+          (d?.attendances ?? []).forEach((a: { studentId: string; status: string }) => {
+            if (next[a.studentId] !== undefined) next[a.studentId] = a.status;
+          });
+          return next;
+        });
+      })
+      .catch(() => {})
+      .finally(() => setPrefillLoading(false));
+  }, [selectedClass, selectedDate, selectedSubject, students.length]);
+
   const handleSave = async () => {
     if (!selectedClass || !selectedDate) {
       return toast({ title: "Select class and date", variant: "destructive" });
@@ -73,14 +94,15 @@ export default function AttendancePage() {
         body: JSON.stringify({
           classId: selectedClass,
           date: selectedDate,
-          subjectId: selectedSubject || null,
+          subjectId: !selectedSubject || selectedSubject === "all" ? null : selectedSubject,
           records: Object.entries(records).map(([studentId, status]) => ({ studentId, status })),
         }),
       });
-      if (!res.ok) throw new Error("Failed");
-      toast({ title: "Attendance saved!", variant: "success" });
-    } catch {
-      toast({ title: "Failed to save attendance", variant: "destructive" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      toast({ title: `Attendance saved (${data.count ?? records.length} students)`, variant: "success" });
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Failed to save attendance", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -148,6 +170,10 @@ export default function AttendancePage() {
               </Button>
             </div>
           </div>
+          <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+            <RefreshCw className={`h-3 w-3 ${prefillLoading ? "animate-spin" : ""}`} />
+            {prefillLoading ? "Loading saved attendance..." : "Saved records for the selected class, date, and subject are loaded automatically."}
+          </p>
         </CardContent>
       </Card>
 

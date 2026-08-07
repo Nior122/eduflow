@@ -5,12 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, Users, DollarSign, GraduationCap, Award } from "lucide-react";
+import { TrendingUp, Users, DollarSign, GraduationCap, Award, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+
+type BestStudent = { name: string; score: number; grade: string };
+type WeakSubject = { name: string; avg: number; results: number };
 
 type ReportData = {
-  academic: { bestStudents: number; weakSubjects: number; classAverages: number };
-  financial: { revenue: number; outstanding: number };
-  attendance: { rate: number; trend: number };
+  academic: {
+    bestStudents: BestStudent[];
+    weakSubjects: WeakSubject[];
+    classAverages: number;
+  };
+  financial: { revenue: number; outstanding: number; totalFees: number };
+  attendance: { rate: number; trend: number | null };
 };
 
 export default function ReportsPage() {
@@ -19,8 +27,8 @@ export default function ReportsPage() {
 
   useEffect(() => {
     fetch("/api/admin/reports")
-      .then(r => r.ok && r.json())
-      .then(d => setData(d))
+      .then((r) => r.ok && r.json())
+      .then((d) => setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -41,34 +49,142 @@ export default function ReportsPage() {
 
         <TabsContent value="academic" className="space-y-4 mt-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><Award className="h-4 w-4" /> Top Performers</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : data?.academic.bestStudents || 0}</p><p className="text-xs text-muted-foreground">Students with A average</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Weak Areas</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : data?.academic.weakSubjects || 0}</p><p className="text-xs text-muted-foreground">Subjects needing improvement</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Class Average</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : `${data?.academic.classAverages || 0}%`}</p><p className="text-xs text-muted-foreground">Overall performance</p></CardContent></Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><Award className="h-4 w-4" /> Top Performers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : data?.academic.bestStudents.length ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Students in the top 5</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Weak Areas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : data?.academic.weakSubjects.length ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Subjects averaging below 50%</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Class Average</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : `${data?.academic.classAverages ?? 0}%`}</p>
+                <p className="text-xs text-muted-foreground">Overall performance</p>
+              </CardContent>
+            </Card>
           </div>
-          <Card><CardContent className="py-12 text-center text-muted-foreground">
-            <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Detailed academic charts and class performance breakdowns will appear here when data is available.</p>
-          </CardContent></Card>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top 5 students</CardTitle></CardHeader>
+              <CardContent>
+                {loading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : (data?.academic.bestStudents ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No results recorded yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {data!.academic.bestStudents.map((s, i) => (
+                      <div key={`${s.name}-${i}`} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-muted-foreground">{i + 1}.</span>
+                          {s.name}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <Badge variant="success">{s.grade}</Badge>
+                          <span className="font-medium">{s.score}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Subjects needing improvement</CardTitle></CardHeader>
+              <CardContent>
+                {loading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : (data?.academic.weakSubjects ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">
+                    No weak subjects — every subject averages 50% or above
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {data!.academic.weakSubjects.map((s) => (
+                      <div key={s.name} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                        <span>{s.name}</span>
+                        <span className="flex items-center gap-2">
+                          <Badge variant="destructive">{s.avg}%</Badge>
+                          <span className="text-xs text-muted-foreground">{s.results} results</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="financial" className="space-y-4 mt-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Total Revenue</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `₦${(data?.financial?.revenue || 0).toLocaleString()}`}</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Outstanding Fees</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `₦${(data?.financial?.outstanding || 0).toLocaleString()}`}</p></CardContent></Card>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Total Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(data?.financial.revenue ?? 0)}</p>
+                <p className="text-xs text-muted-foreground">Paid & waived fee records</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Outstanding Fees</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(data?.financial.outstanding ?? 0)}</p>
+                <p className="text-xs text-muted-foreground">Pending & partial balances</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Total Fees</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : formatCurrency(data?.financial.totalFees ?? 0)}</p>
+                <p className="text-xs text-muted-foreground">All active fee types</p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="attendance" className="space-y-4 mt-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" /> Overall Attendance</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : `${data?.attendance?.rate || 0}%`}</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Trend</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : `${data?.attendance?.trend || 0}%`}</p></CardContent></Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" /> Overall Attendance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : `${data?.attendance.rate ?? 0}%`}</p>
+                <p className="text-xs text-muted-foreground">Present vs all records</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">
+                  {loading ? <Skeleton className="h-8 w-16" /> : data?.attendance.trend == null ? "—" : `${data.attendance.trend > 0 ? "+" : ""}${data.attendance.trend}%`}
+                </p>
+                <p className="text-xs text-muted-foreground">Recent vs earlier period</p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

@@ -1,13 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Loader2, Send, Bot, User, BookOpen } from "lucide-react";
+import { Sparkles, Loader2, Send, Bot, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Message = { role: "user" | "assistant"; content: string };
+
+// Tiny markdown-lite renderer: **bold**, *italic*, and line breaks.
+function renderRich(text: string): ReactNode {
+  return text.split("\n").map((line, i) => {
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    const nodes = parts.map((part, j) => {
+      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+        return <strong key={j}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+        return <em key={j}>{part.slice(1, -1)}</em>;
+      }
+      return part;
+    });
+    return (
+      <p key={i} className={line.startsWith("-") ? "pl-3" : ""}>
+        {nodes}
+      </p>
+    );
+  });
+}
 
 export default function HomeworkAssistantPage() {
   const [question, setQuestion] = useState("");
@@ -27,24 +49,11 @@ export default function HomeworkAssistantPage() {
       const res = await fetch("/api/ai/homework-assistant", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
-      } else {
-        throw new Error("API failed");
-      }
-    } catch {
-      // Fallback answers
-      const answers: Record<string, string> = {
-        photosynthesis: "**Photosynthesis** is the process by which green plants convert sunlight into energy.\n\n**Key points:**\n1. Plants use **chlorophyll** (the green pigment) to capture sunlight\n2. They take in **carbon dioxide** (CO₂) from the air through stomata\n3. They absorb **water** (H₂O) from the soil through roots\n4. Using sunlight energy, they convert CO₂ and H₂O into **glucose** (food) and **oxygen**\n\n**Chemical equation:**\n6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂\n\n**Example question:** What happens to the oxygen produced? → It's released into the air through the stomata.",
-        math: "Here's a helpful math explanation!\n\n**Key concept breakdown:**\nLet me explain this step by step with an example.",
-      };
-      const keywords = Object.keys(answers);
-      const found = keywords.find(k => question.toLowerCase().includes(k));
-      const answer = found
-        ? answers[found]
-        : "Great question! Let me help you understand this topic.\n\n**Step-by-step explanation:**\n1. First, let's understand the core concept\n2. Here's a simple example to illustrate\n3. Practice with similar problems\n\n**Tip:** Try breaking the problem into smaller parts. If you need more specific help, feel free to ask a follow-up question!";
-      setMessages(prev => [...prev, { role: "assistant", content: answer }]);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "API failed");
+      setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Failed to get an answer", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -73,12 +82,12 @@ export default function HomeworkAssistantPage() {
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
-              <div className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+              <div className={`max-w-[80%] rounded-lg px-4 py-2.5 text-sm leading-relaxed ${
                 msg.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50"
               }`}>
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                {msg.role === "assistant" ? renderRich(msg.content) : msg.content}
               </div>
               {msg.role === "user" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">

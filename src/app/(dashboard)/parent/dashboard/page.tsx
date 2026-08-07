@@ -6,40 +6,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, GraduationCap, BookOpen, DollarSign, TrendingUp, AlertCircle, Eye, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, BookOpen, DollarSign, TrendingUp } from "lucide-react";
 import { getInitials, formatDate, formatCurrency } from "@/lib/utils";
-import Link from "next/link";
 
 type ChildData = {
   id: string; firstName: string; lastName: string; admissionNumber: string; class: { name: string } | null;
   attendances: { status: string; date: string }[];
   results: { subject: { name: string }; total: string; grade: string; term: string }[];
-  feeRecords: { fee: { name: string }; amount: string; status: string }[];
+  feeRecords: { fee: { name: string; amount: string }; amount: string; status: string }[];
 };
 
 export default function ParentDashboardPage() {
-  const [child, setChild] = useState<ChildData | null>(null);
+  const [children, setChildren] = useState<ChildData[]>([]);
+  const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/parent/dashboard")
       .then(r => r.ok && r.json())
-      .then(d => { if (d?.child) setChild(d.child); })
+      .then(d => {
+        const kids = d?.children ?? [];
+        setChildren(kids);
+        if (kids.length > 0) setSelectedId(kids[0].id);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="space-y-6"><Skeleton className="h-32" /><Skeleton className="h-64" /></div>;
-  if (!child) return (
+  if (children.length === 0) return (
     <div className="flex flex-col items-center justify-center py-20">
       <User className="h-12 w-12 text-muted-foreground mb-4" />
       <h3 className="text-lg font-semibold">No Child Linked</h3>
-      <p className="text-muted-foreground">Please contact the school to link your child's profile.</p>
+      <p className="text-muted-foreground">Please contact the school to link your child&apos;s profile.</p>
     </div>
   );
+
+  const child = children.find((c) => c.id === selectedId) ?? children[0];
 
   const attendanceRate = child.attendances.length > 0
     ? Math.round((child.attendances.filter(a => a.status === "PRESENT").length / child.attendances.length) * 100) : 0;
@@ -49,20 +55,34 @@ export default function ParentDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarFallback className="text-lg bg-primary/10 text-primary">{getInitials(`${child.firstName} ${child.lastName}`)}</AvatarFallback>
-        </Avatar>
-        <div>
-          <h2 className="text-2xl font-bold">{child.firstName} {child.lastName}</h2>
-          <p className="text-muted-foreground">{child.class?.name || "Not assigned"} · {child.admissionNumber}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarFallback className="text-lg bg-primary/10 text-primary">{getInitials(`${child.firstName} ${child.lastName}`)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="text-2xl font-bold">{child.firstName} {child.lastName}</h2>
+            <p className="text-muted-foreground">{child.class?.name || "Not assigned"} · {child.admissionNumber}</p>
+          </div>
         </div>
+        {children.length > 1 && (
+          <div className="sm:ml-auto w-full sm:w-64">
+            <Select value={child.id} onValueChange={setSelectedId}>
+              <SelectTrigger><SelectValue placeholder="Select child" /></SelectTrigger>
+              <SelectContent>
+                {children.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.firstName} {c.lastName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Attendance Rate" value={`${attendanceRate}%`} icon={TrendingUp} trend={attendanceRate >= 80 ? 5 : -10} />
-        <StatCard title="Average Score" value={`${avgScore}%`} icon={BookOpen} trend={avgScore >= 60 ? 3 : -5} />
-        <StatCard title="Fee Status" value={child.feeRecords.filter(f => f.status === "PAID").length + "/" + child.feeRecords.length + " paid"} icon={DollarSign} />
+        <StatCard title="Attendance Rate" value={`${attendanceRate}%`} icon={TrendingUp} />
+        <StatCard title="Average Score" value={`${avgScore}%`} icon={BookOpen} />
+        <StatCard title="Fee Status" value={`${child.feeRecords.filter(f => f.status === "PAID").length}/${child.feeRecords.length} paid`} icon={DollarSign} />
       </div>
 
       <Tabs defaultValue="results" className="space-y-4">

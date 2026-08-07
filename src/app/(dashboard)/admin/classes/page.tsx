@@ -13,10 +13,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
+import { Plus, BookOpen, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
-type Class = {
+type ClassItem = {
   id: string;
   name: string;
   category: string;
@@ -25,40 +26,88 @@ type Class = {
   _count: { students: number };
 };
 
+const EMPTY_FORM = { name: "", category: "PRIMARY", section: "", capacity: "" };
+
 export default function ClassesPage() {
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ClassItem | null>(null);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({ name: "", category: "PRIMARY", section: "" });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
-  useEffect(() => {
+  const load = () =>
     fetch("/api/admin/classes")
       .then((r) => r.ok && r.json())
       .then((d) => d?.classes && setClasses(d.classes))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+  useEffect(() => {
+    load();
   }, []);
 
-  const handleCreate = async () => {
+  const openCreate = () => {
+    setEditing(null);
+    setFormData(EMPTY_FORM);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (cls: ClassItem) => {
+    setEditing(cls);
+    setFormData({
+      name: cls.name,
+      category: cls.category,
+      section: cls.section ?? "",
+      capacity: cls.capacity != null ? String(cls.capacity) : "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!formData.name) return toast({ title: "Class name required", variant: "destructive" });
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/classes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error("Failed");
-      toast({ title: "Class created", variant: "success" });
+      const payload = {
+        name: formData.name,
+        category: formData.category,
+        section: formData.section || undefined,
+        capacity: formData.capacity ? Number(formData.capacity) : undefined,
+      };
+      const res = editing
+        ? await fetch(`/api/admin/classes/${editing.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await fetch("/api/admin/classes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      toast({ title: editing ? "Class updated" : "Class created", variant: "success" });
       setDialogOpen(false);
-      setFormData({ name: "", category: "PRIMARY", section: "" });
-      const updated = await fetch("/api/admin/classes").then((r) => r.json());
-      setClasses(updated.classes);
-    } catch {
-      toast({ title: "Failed to create class", variant: "destructive" });
+      load();
+    } catch (err) {
+      toast({
+        title: err instanceof Error ? err.message : "Failed to save class",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (cls: ClassItem) => {
+    try {
+      const res = await fetch(`/api/admin/classes/${cls.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      toast({ title: "Class deleted", variant: "success" });
+      load();
+    } catch {
+      toast({ title: "Failed to delete class", variant: "destructive" });
     }
   };
 
@@ -80,18 +129,26 @@ export default function ClassesPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="gradient"><Plus className="mr-2 h-4 w-4" /> Add Class</Button>
+            <Button variant="gradient" onClick={openCreate}>
+              <Plus className="mr-2 h-4 w-4" /> Add Class
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Create New Class</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit Class" : "Create New Class"}</DialogTitle>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label>Class Name</Label>
-                <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Primary 1" />
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Primary 1"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
+                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PRIMARY">Primary</SelectItem>
@@ -102,13 +159,27 @@ export default function ClassesPage() {
               </div>
               <div className="space-y-2">
                 <Label>Section (optional)</Label>
-                <Input value={formData.section} onChange={(e) => setFormData({...formData, section: e.target.value})} placeholder="e.g. A, B, or Science" />
+                <Input
+                  value={formData.section}
+                  onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                  placeholder="e.g. A, B, or Science"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Capacity (optional)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                  placeholder="e.g. 40"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={saving}>
-                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : "Create Class"}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : editing ? "Save Changes" : "Create Class"}
               </Button>
             </div>
           </DialogContent>
@@ -126,8 +197,21 @@ export default function ClassesPage() {
                       <BookOpen className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg">{cls.name}</CardTitle>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       {getCategoryBadge(cls.category)}
+                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Edit ${cls.name}`} onClick={() => openEdit(cls)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <ConfirmDialog
+                        title="Delete class?"
+                        description={`"${cls.name}" will be deactivated. Existing students keep their records.`}
+                        trigger={
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Delete ${cls.name}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        }
+                        onConfirm={() => handleDelete(cls)}
+                      />
                     </div>
                   </div>
                 </CardHeader>

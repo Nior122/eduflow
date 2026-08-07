@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
   Users,
@@ -17,15 +15,12 @@ import {
   Megaphone,
   BarChart3,
   Brain,
-  Settings,
   LogOut,
   ChevronLeft,
   Menu,
   BookMarked,
-  MessageSquare,
   Home,
   Sparkles,
-  UserCheck,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { getInitials } from "@/lib/utils";
@@ -43,6 +38,7 @@ const navItems: NavItem[] = [
   { label: "Students", icon: Users, href: "/admin/students", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Teachers", icon: GraduationCap, href: "/admin/teachers", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Classes", icon: BookOpen, href: "/admin/classes", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Subjects", icon: BookMarked, href: "/admin/subjects", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Fees", icon: DollarSign, href: "/admin/fees", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Reports", icon: BarChart3, href: "/admin/reports", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Announcements", icon: Megaphone, href: "/admin/announcements", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },

@@ -1,20 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2, RefreshCw, Edit3, Check, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Loader2, RefreshCw, Edit3, Check, Save, Trash2, FolderOpen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { formatDateTime } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
+type StudentOption = { id: string; firstName: string; lastName: string; admissionNumber: string };
+type SavedComment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  student: { firstName: string; lastName: string; admissionNumber: string };
+};
 
 export default function ReportCommentsPage() {
-  const [form, setForm] = useState({ name: "", mathScore: "", englishScore: "", attendance: "", behaviour: "Good" });
+  const [students, setStudents] = useState<StudentOption[]>([]);
+  const [form, setForm] = useState({ studentId: "", name: "", mathScore: "", englishScore: "", attendance: "", behaviour: "Good" });
   const [comment, setComment] = useState("");
   const [editing, setEditing] = useState(false);
   const [editedComment, setEditedComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedComments, setSavedComments] = useState<SavedComment[]>([]);
+
+  const loadSaved = () =>
+    fetch("/api/ai/report-comments")
+      .then((r) => r.ok && r.json())
+      .then((d) => d?.comments && setSavedComments(d.comments))
+      .catch(() => {});
+
+  useEffect(() => {
+    fetch("/api/admin/students?limit=100")
+      .then((r) => r.ok && r.json())
+      .then((d) => d?.students && setStudents(d.students))
+      .catch(() => {});
+    loadSaved();
+  }, []);
 
   const handleGenerate = async () => {
     if (!form.name) return toast({ title: "Student name is required", variant: "destructive" });
@@ -25,41 +53,50 @@ export default function ReportCommentsPage() {
       const res = await fetch("/api/ai/report-comment", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setComment(data.comment);
-      } else {
-        throw new Error("API failed");
-      }
-    } catch {
-      // Fallback generated comment
-      const score = parseInt(form.mathScore) || 0;
-      const engScore = parseInt(form.englishScore) || 0;
-      const avg = (score + engScore) / 2;
-      let commentText = `${form.name} has `;
-      if (avg >= 70) commentText += "demonstrated excellent academic performance this term. ";
-      else if (avg >= 55) commentText += "shown good progress and consistent effort in their studies. ";
-      else commentText += "shown potential but needs to apply more effort to meet academic expectations. ";
-
-      if (score >= engScore + 10) commentText += "Mathematics is a clear strength. ";
-      else if (engScore >= score + 10) commentText += "English Language skills are commendable. ";
-
-      if (parseInt(form.attendance) >= 90) commentText += "Attendance has been excellent. ";
-      else if (parseInt(form.attendance) >= 75) commentText += "Attendance is satisfactory. ";
-      else commentText += "Regular attendance is needed to improve performance. ";
-
-      commentText += `Behaviour in class has been ${form.behaviour.toLowerCase()}. `;
-      commentText += "Keep up the good work and continue striving for excellence!";
-
-      setComment(commentText);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "API failed");
+      setComment(data.comment);
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Failed to generate comment", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = () => {
-    toast({ title: "Comment saved!", variant: "success" });
-    setEditing(false);
+  const handleSave = async () => {
+    const text = editing ? editedComment : comment;
+    if (!text) return toast({ title: "Nothing to save", variant: "destructive" });
+    if (!form.studentId) {
+      return toast({ title: "Select the student this comment is for", variant: "destructive" });
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/ai/report-comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: form.studentId, comment: text }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      toast({ title: "Comment saved", variant: "success" });
+      setEditing(false);
+      loadSaved();
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Failed to save comment", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/ai/report-comments/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      toast({ title: "Comment deleted", variant: "success" });
+      loadSaved();
+    } catch {
+      toast({ title: "Failed to delete comment", variant: "destructive" });
+    }
   };
 
   const handleRegenerate = () => {
@@ -79,15 +116,31 @@ export default function ReportCommentsPage() {
         <Card>
           <CardHeader><CardTitle className="text-lg">Student Information</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Student Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. John" /></div>
+            <div className="space-y-2">
+              <Label>Student (for saving)</Label>
+              <Select value={form.studentId} onValueChange={(v) => {
+                const s = students.find((x) => x.id === v);
+                setForm({ ...form, studentId: v, name: s ? `${s.firstName} ${s.lastName}` : form.name });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
+                <SelectContent>
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.firstName} {s.lastName} ({s.admissionNumber})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Student Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. John Doe" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Mathematics (%)</Label><Input type="number" value={form.mathScore} onChange={e => setForm({...form, mathScore: e.target.value})} /></div>
-              <div className="space-y-2"><Label>English (%)</Label><Input type="number" value={form.englishScore} onChange={e => setForm({...form, englishScore: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Mathematics (%)</Label><Input type="number" value={form.mathScore} onChange={e => setForm({ ...form, mathScore: e.target.value })} /></div>
+              <div className="space-y-2"><Label>English (%)</Label><Input type="number" value={form.englishScore} onChange={e => setForm({ ...form, englishScore: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Attendance (%)</Label><Input type="number" value={form.attendance} onChange={e => setForm({...form, attendance: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Attendance (%)</Label><Input type="number" value={form.attendance} onChange={e => setForm({ ...form, attendance: e.target.value })} /></div>
               <div className="space-y-2"><Label>Behaviour</Label>
-                <select className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" value={form.behaviour} onChange={e => setForm({...form, behaviour: e.target.value})}>
+                <select className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" value={form.behaviour} onChange={e => setForm({ ...form, behaviour: e.target.value })}>
                   <option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Satisfactory">Satisfactory</option><option value="Needs Improvement">Needs Improvement</option>
                 </select>
               </div>
@@ -115,13 +168,22 @@ export default function ReportCommentsPage() {
               <div className="space-y-4">
                 <Textarea rows={6} value={editedComment} onChange={e => setEditedComment(e.target.value)} />
                 <div className="flex gap-2">
-                  <Button onClick={handleSave}><Check className="mr-2 h-4 w-4" /> Save</Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Check className="mr-2 h-4 w-4" /> Save</>}
+                  </Button>
                   <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
                 </div>
               </div>
             ) : comment ? (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm leading-relaxed">{comment}</p>
+              <div className="space-y-3">
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm leading-relaxed">{comment}</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={handleSave} disabled={saving} size="sm">
+                    {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save Comment</>}
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12">
@@ -132,6 +194,45 @@ export default function ReportCommentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Saved comments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FolderOpen className="h-5 w-5 text-primary" /> Saved Comments ({savedComments.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {savedComments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No saved comments yet</p>
+          ) : (
+            <div className="space-y-2">
+              {savedComments.map((c) => (
+                <div key={c.id} className="flex items-start justify-between gap-3 rounded-lg border px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {c.student.firstName} {c.student.lastName}{" "}
+                      <span className="text-muted-foreground">({c.student.admissionNumber})</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{c.content}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">{formatDateTime(c.createdAt)}</p>
+                  </div>
+                  <ConfirmDialog
+                    title="Delete comment?"
+                    description="This comment will be permanently deleted."
+                    trigger={
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive shrink-0" aria-label="Delete comment">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    onConfirm={() => handleDelete(c.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Brain, ChartBar, GraduationCap, LucideIcon, Shield, Users } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, ChartBar, GraduationCap, Shield, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [

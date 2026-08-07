@@ -11,7 +11,6 @@ import {
   BookOpen,
   ClipboardCheck,
   DollarSign,
-  TrendingUp,
   ArrowUpRight,
   Clock,
   AlertCircle,
@@ -25,6 +24,8 @@ type DashboardData = {
     attendanceRate: number;
     feeCollection: number;
     performanceAvg: number;
+    studentTrend: number | null;
+    teacherTrend: number | null;
   };
   recentActivities: Array<{
     id: string;
@@ -92,14 +93,14 @@ export default function AdminDashboardPage() {
           title="Total Students"
           value={stats?.totalStudents ?? 0}
           icon={Users}
-          trend={12}
+          trend={stats?.studentTrend ?? undefined}
           description="vs last term"
         />
         <StatCard
           title="Total Teachers"
           value={stats?.totalTeachers ?? 0}
           icon={GraduationCap}
-          trend={8}
+          trend={stats?.teacherTrend ?? undefined}
           description="vs last term"
         />
         <StatCard
@@ -112,14 +113,12 @@ export default function AdminDashboardPage() {
           title="Attendance Rate"
           value={stats ? `${stats.attendanceRate}%` : "0%"}
           icon={ClipboardCheck}
-          trend={3}
           description="this week"
         />
         <StatCard
           title="Fee Collection"
           value={stats ? `${stats.feeCollection}%` : "0%"}
           icon={DollarSign}
-          trend={5}
           description="this term"
         />
       </div>
@@ -130,10 +129,6 @@ export default function AdminDashboardPage() {
         <Card className="lg:col-span-4">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Academic Performance</CardTitle>
-            <Badge variant="outline" className="text-xs">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +5.2% avg
-            </Badge>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center h-64">

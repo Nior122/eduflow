@@ -6,22 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Loader2, Mail, ArrowLeft } from "lucide-react";
+import { GraduationCap, Loader2, Mail, ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [devLink, setDevLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate sending email
-    await new Promise((r) => setTimeout(r, 1500));
-    setSent(true);
-    setLoading(false);
-    toast({ title: "Reset link sent!", description: "Check your email for instructions.", variant: "success" });
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send reset link");
+      if (data.dev && data.resetUrl) setDevLink(data.resetUrl);
+      setSent(true);
+    } catch (err) {
+      toast({
+        title: err instanceof Error ? err.message : "Failed to send reset link",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (sent) {
@@ -41,7 +55,22 @@ export default function ForgotPasswordPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Didn&apos;t receive the email? Check your spam folder or try again.
             </p>
-            <Link href="/login"><Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Login</Button></Link>
+            {devLink && (
+              <div className="mb-4 rounded-lg border border-dashed p-3 text-left">
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  No email provider configured (dev mode) — use this link directly:
+                </p>
+                <a
+                  href={devLink}
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline break-all"
+                >
+                  <ExternalLink className="h-3 w-3 shrink-0" /> {devLink}
+                </a>
+              </div>
+            )}
+            <Link href="/login">
+              <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Login</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
