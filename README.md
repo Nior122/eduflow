@@ -148,7 +148,7 @@ Complete school financial management (built on the Phase 1-4 base):
 
 ### Phase 5 verification
 ```bash
-npx prisma validate            # schema valid (55 models)
+npx prisma validate            # schema valid (57 models)
 npm run typecheck              # 0 TS errors
 npm run build                  # production build passes
 SEED_CONFIRM=yes npm run db:seed   # demo finance data (14 categories, 6 invoices, payments, receipts, scholarship, plan)
