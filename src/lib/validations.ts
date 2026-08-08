@@ -232,6 +232,11 @@ export const feeSchema = z.object({
   isOptional: z.boolean().default(false),
   term: z.enum(["FIRST", "SECOND", "THIRD"]).optional(),
   session: z.string().optional(),
+  feeCategoryId: z.string().optional(),
+  classId: z.string().nullable().optional(),
+  departmentId: z.string().nullable().optional(),
+  isRecurring: z.boolean().optional(),
+  lateFee: z.coerce.number().min(0).nullable().optional(),
 });
 
 export const feeUpdateSchema = feeSchema.partial();
@@ -556,4 +561,108 @@ export const promotionApplySchema = z.object({
   toClassId: z.string().nullable().optional(),
   sessionId: z.string().min(1),
   note: z.string().optional(),
+});
+
+
+// ─── Phase 5: finance ────────────────────────────────────────────────
+
+export const feeCategorySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  code: z.string().optional(),
+  description: z.string().optional(),
+  color: z.string().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export const feeCategoryUpdateSchema = feeCategorySchema.partial();
+
+export const billingGenerateSchema = z
+  .object({
+    sessionId: z.string().min(1, "Session is required"),
+    termId: z.string().min(1, "Term is required"),
+    studentIds: z.array(z.string()).optional(),
+    classId: z.string().optional(),
+    departmentId: z.string().optional(),
+    feeIds: z.array(z.string()).optional(),
+    discountId: z.string().nullable().optional(),
+    dueDate: z.string().nullable().optional(),
+  })
+  .refine((d) => !(d.studentIds?.length && d.classId), {
+    message: "Provide studentIds OR classId, not both",
+  });
+
+export const invoiceCreateSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  feeIds: z.array(z.string()).min(1, "Select at least one fee"),
+  discountId: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  notes: z.string().optional(),
+  sessionId: z.string().optional(),
+  termId: z.string().optional(),
+});
+
+export const invoiceUpdateSchema = z.object({
+  notes: z.string().optional(),
+});
+
+export const paymentCreateSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than zero").max(1000000000),
+  method: z.enum(["CASH", "BANK_TRANSFER", "CARD", "MOBILE_MONEY", "CHEQUE"]),
+  reference: z.string().min(3, "Reference is required"),
+  invoiceIds: z.array(z.string()).optional(),
+  studentId: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const gatewayInitSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than zero"),
+  email: z.string().email().optional(),
+  invoiceId: z.string().optional(),
+  studentId: z.string().optional(),
+});
+
+export const discountCreateSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  code: z.string().optional(),
+  type: z.enum(["PERCENTAGE", "FIXED", "WAIVER", "SCHOLARSHIP", "SIBLING", "STAFF"]),
+  value: z.coerce.number().min(0, "Value cannot be negative"),
+  scope: z.enum(["STUDENT", "CLASS", "SCHOOL", "FEE"]).default("STUDENT"),
+  studentId: z.string().optional(),
+  classId: z.string().optional(),
+  feeId: z.string().optional(),
+  reason: z.string().optional(),
+  validUntil: z.string().nullable().optional(),
+});
+
+export const discountReviewSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT"]),
+  note: z.string().optional(),
+});
+
+export const planCreateSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  invoiceId: z.string().optional(),
+  totalAmount: z.coerce.number().positive("Total must be positive"),
+  installmentAmount: z.coerce.number().positive("Installment must be positive"),
+  installmentCount: z.coerce.number().int().min(1).max(52),
+  frequency: z.enum(["WEEKLY", "MONTHLY", "TERMLY"]).default("MONTHLY"),
+  startDate: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+});
+
+export const planUpdateSchema = z.object({
+  status: z.enum(["COMPLETED", "CANCELLED"]),
+});
+
+export const reminderSchema = z.object({
+  invoiceIds: z.array(z.string()).min(1, "Select at least one invoice"),
+});
+
+export const gatewayConfigSchema = z.object({
+  gateway: z.enum(["paystack", "flutterwave", "stripe"]),
+  isActive: z.boolean().default(false),
+  publicKey: z.string().optional(),
+  secretKey: z.string().optional(),
+  webhookSecret: z.string().optional(),
+  testMode: z.boolean().default(true),
 });

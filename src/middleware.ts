@@ -2,6 +2,7 @@ import { authMiddleware as auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const ADMIN_ROLES: readonly string[] = ["SUPER_ADMIN", "SCHOOL_ADMIN"];
+const FINANCE_ROLES: readonly string[] = ["FINANCE_OFFICER", "SUPER_ADMIN", "SCHOOL_ADMIN"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -44,6 +45,8 @@ export default auth((req) => {
   // Role gates for API routes (defense-in-depth; each route also self-checks)
   if (isApi) {
     const apiRoleGates: Array<[string, readonly string[]]> = [
+      ["/api/finance", FINANCE_ROLES],
+      ["/api/admin/fees", FINANCE_ROLES],
       ["/api/admin", ADMIN_ROLES],
       ["/api/attendance", ["TEACHER", ...ADMIN_ROLES]],
       ["/api/results", ["TEACHER", ...ADMIN_ROLES]],
@@ -63,7 +66,11 @@ export default auth((req) => {
   }
 
   // Role-based page protection
-  if (pathname.startsWith("/admin") && !ADMIN_ROLES.includes(role)) {
+  if (pathname.startsWith("/admin/finance") || pathname.startsWith("/admin/fees")) {
+    if (!FINANCE_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+  } else if (pathname.startsWith("/admin") && !ADMIN_ROLES.includes(role)) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
   if (pathname.startsWith("/teacher") && role !== "TEACHER") {
@@ -88,6 +95,8 @@ function getDashboardUrl(role: string): string {
     case "SUPER_ADMIN":
     case "SCHOOL_ADMIN":
       return "/admin/dashboard";
+    case "FINANCE_OFFICER":
+      return "/admin/finance/dashboard";
     case "TEACHER":
       return "/teacher/dashboard";
     case "PARENT":

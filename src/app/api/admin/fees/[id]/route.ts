@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
-import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, feeUpdateSchema, feeRecordSchema } from "@/lib/validations";
 import { generateReference } from "@/lib/provision";
+import { financeGuard } from "@/lib/finance/guards";
+import { logFinanceAudit } from "@/lib/finance/audit";
 import { Prisma, type FeeStatus } from "@prisma/client";
-
-const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: RouteCtx) {
-  const session = await auth();
-  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
-  if (denied) return denied;
-  const schoolId = session?.user?.schoolId;
-  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+  const g = await financeGuard();
+  if (g.denied) return g.denied;
+  const schoolId = g.schoolId!;
   const { id } = await params;
 
   const fee = await prisma.fee.findFirst({ where: { id, schoolId, isActive: true }, select: { id: true } });
@@ -34,12 +30,9 @@ export async function GET(_req: Request, { params }: RouteCtx) {
 }
 
 export async function PATCH(req: Request, { params }: RouteCtx) {
-  const session = await auth();
-  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
-  if (denied) return denied;
-  const schoolId = session?.user?.schoolId;
-  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+  const g = await financeGuard();
+  if (g.denied) return g.denied;
+  const schoolId = g.schoolId!;
   const { id } = await params;
 
   try {
@@ -50,7 +43,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
     }
     const data = parsed.data;
 
-    const existing = await prisma.fee.findFirst({ where: { id, schoolId }, select: { id: true } });
+    const existing = await prisma.fee.findFirst({ where: { id, schoolId }, select: { id: true, name: true } });
     if (!existing) return NextResponse.json({ error: "Fee not found" }, { status: 404 });
 
     const updateData: Prisma.FeeUpdateInput = {
@@ -59,52 +52,65 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
       ...(data.amount !== undefined && { amount: data.amount }),
       ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
       ...(data.isOptional !== undefined && { isOptional: data.isOptional }),
+      ...(data.isRecurring !== undefined && { isRecurring: data.isRecurring }),
+      ...(data.lateFee !== undefined && { lateFee: data.lateFee ?? null }),
       ...(data.term !== undefined && { term: data.term ?? null }),
+      ...(data.session !== undefined && { session: data.session ?? null }),
+      ...(data.feeCategoryId !== undefined && { feeCategoryId: data.feeCategoryId ?? null }),
+      ...(data.classId !== undefined && { classId: data.classId ?? null }),
+      ...(data.departmentId !== undefined && { departmentId: data.departmentId ?? null }),
     };
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
-    }
 
     const fee = await prisma.fee.update({ where: { id }, data: updateData });
+
+    await logFinanceAudit({
+      actorId: g.session?.user?.id ?? null,
+      action: "FEE_UPDATE",
+      entity: "Fee",
+      entityId: id,
+      oldValue: { name: existing.name },
+      newValue: { name: fee.name, amount: Number(fee.amount) },
+    });
     return NextResponse.json({ fee });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json({ error: "Fee not found" }, { status: 404 });
-    }
     console.error("Failed to update fee:", error);
     return NextResponse.json({ error: "Failed to update fee" }, { status: 500 });
   }
 }
 
 export async function DELETE(_req: Request, { params }: RouteCtx) {
-  const session = await auth();
-  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
-  if (denied) return denied;
-  const schoolId = session?.user?.schoolId;
-  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+  const g = await financeGuard();
+  if (g.denied) return g.denied;
+  const schoolId = g.schoolId!;
   const { id } = await params;
 
-  try {
-    const existing = await prisma.fee.findFirst({ where: { id, schoolId }, select: { id: true } });
-    if (!existing) return NextResponse.json({ error: "Fee not found" }, { status: 404 });
+  const existing = await prisma.fee.findFirst({ where: { id, schoolId }, select: { id: true, name: true } });
+  if (!existing) return NextResponse.json({ error: "Fee not found" }, { status: 404 });
 
-    await prisma.fee.update({ where: { id }, data: { isActive: false } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete fee:", error);
-    return NextResponse.json({ error: "Failed to delete fee" }, { status: 500 });
+  const recordCount = await prisma.feeRecord.count({ where: { feeId: id } });
+  if (recordCount > 0) {
+    return NextResponse.json(
+      { error: "Cannot delete a fee with payment records — deactivate it instead" },
+      { status: 409 }
+    );
   }
+
+  await prisma.fee.update({ where: { id }, data: { isActive: false } });
+  await logFinanceAudit({
+    actorId: g.session?.user?.id ?? null,
+    action: "FEE_DELETE",
+    entity: "Fee",
+    entityId: id,
+    oldValue: { name: existing.name },
+  });
+  return NextResponse.json({ success: true });
 }
 
-/** Record a payment against a fee for one student (creates Payment + FeeRecord). */
+/** Legacy direct payment against a fee (Phase 1 flow, kept for compatibility). */
 export async function POST(req: Request, { params }: RouteCtx) {
-  const session = await auth();
-  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
-  if (denied) return denied;
-  const schoolId = session?.user?.schoolId;
-  if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+  const g = await financeGuard();
+  if (g.denied) return g.denied;
+  const schoolId = g.schoolId!;
   const { id } = await params;
 
   try {

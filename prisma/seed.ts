@@ -3,6 +3,9 @@ import { hash } from "bcryptjs";
 import { upsertComputedResult } from "../src/lib/exams/calculator";
 import { recomputePositions } from "../src/lib/exams/positions";
 import { buildReportCard } from "../src/lib/exams/report-card";
+import { generateInvoices } from "../src/lib/finance/billing";
+import { recordPayment, createPaymentPlan } from "../src/lib/finance/payments";
+import { createDiscount, reviewDiscount } from "../src/lib/finance/discounts";
 
 const prisma = new PrismaClient();
 
@@ -25,9 +28,20 @@ async function main() {
     prisma.message.deleteMany(),
     prisma.notification.deleteMany(),
     prisma.announcement.deleteMany(),
+    prisma.financeAuditLog.deleteMany(),
+    prisma.receipt.deleteMany(),
+    prisma.invoicePayment.deleteMany(),
+    prisma.invoiceItem.deleteMany(),
+    prisma.invoice.deleteMany(),
+    prisma.discount.deleteMany(),
+    prisma.paymentPlan.deleteMany(),
+    prisma.latePayment.deleteMany(),
+    prisma.paymentGatewayConfig.deleteMany(),
+    prisma.numberSequence.deleteMany(),
     prisma.payment.deleteMany(),
     prisma.feeRecord.deleteMany(),
     prisma.fee.deleteMany(),
+    prisma.feeCategory.deleteMany(),
     prisma.resultApprovalRecord.deleteMany(),
     prisma.result.deleteMany(),
     prisma.assessmentScore.deleteMany(),
@@ -119,6 +133,16 @@ async function main() {
       email: "student@eduflow.com",
       passwordHash,
       role: "STUDENT",
+      schoolId: school.id,
+    },
+  });
+
+  const financeUser = await prisma.user.create({
+    data: {
+      name: "Finance Officer",
+      email: "finance@eduflow.com",
+      passwordHash,
+      role: "FINANCE_OFFICER",
       schoolId: school.id,
     },
   });
@@ -524,6 +548,114 @@ async function main() {
     )
   );
 
+  // Phase 5: finance demo
+  const feeCategories = await Promise.all(
+    [
+      { name: "Tuition", code: "TUITION", sortOrder: 1 },
+      { name: "Admission Fee", code: "ADMISSION", sortOrder: 2 },
+      { name: "Books", code: "BOOKS", sortOrder: 3 },
+      { name: "Uniform", code: "UNIFORM", sortOrder: 4 },
+      { name: "Development Levy", code: "DEVLEVY", sortOrder: 5 },
+      { name: "Transportation", code: "TRANSPORT", sortOrder: 6 },
+      { name: "Hostel", code: "HOSTEL", sortOrder: 7 },
+      { name: "Laboratory", code: "LAB", sortOrder: 8 },
+      { name: "Sports", code: "SPORTS", sortOrder: 9 },
+      { name: "Examination Fee", code: "EXAMFEE", sortOrder: 10 },
+      { name: "Library", code: "LIBRARY", sortOrder: 11 },
+      { name: "PTA Levy", code: "PTA", sortOrder: 12 },
+      { name: "ICT Fee", code: "ICT", sortOrder: 13 },
+      { name: "Graduation Fee", code: "GRAD", sortOrder: 14 },
+    ].map((c) => prisma.feeCategory.create({ data: { ...c, schoolId: school.id } }))
+  );
+
+  // attach categories + flags to the seeded fees
+  const categoryNames = ["Tuition", "Books", "Uniform", "Transportation"];
+  for (let i = 0; i < fees.length; i++) {
+    const cat = feeCategories.find((c) => c.name === categoryNames[i]) ?? feeCategories[0];
+    await prisma.fee.update({
+      where: { id: fees[i].id },
+      data: {
+        feeCategoryId: cat.id,
+        isRecurring: fees[i].name === "Transportation",
+        lateFee: fees[i].name === "Tuition" ? 5000 : null,
+      },
+    });
+  }
+
+  // bulk-bill FIRST term for classes 0-2
+  for (const cls of classes.slice(0, 3)) {
+    await generateInvoices({
+      schoolId: school.id,
+      sessionId: session.id,
+      termId: firstTerm.id,
+      classId: cls.id,
+      issuedById: adminUser.id,
+    });
+  }
+
+  // payments: full for the first open invoice, partial for the second
+  const openInvoices = await prisma.invoice.findMany({
+    where: { sessionId: session.id, termId: firstTerm.id, status: "ISSUED" },
+    orderBy: { student: { lastName: "asc" } },
+  });
+  if (openInvoices.length >= 2) {
+    const due0 = Number(openInvoices[0].amount) - Number(openInvoices[0].discountAmount);
+    await recordPayment({
+      schoolId: school.id,
+      amount: due0,
+      method: "BANK_TRANSFER",
+      reference: "TFR-DEMO-0001",
+      invoiceIds: [openInvoices[0].id],
+      receivedById: financeUser.id,
+    });
+    const due1 = Number(openInvoices[1].amount) - Number(openInvoices[1].discountAmount);
+    await recordPayment({
+      schoolId: school.id,
+      amount: Math.round(due1 * 0.5 * 100) / 100,
+      method: "CASH",
+      reference: "TFR-DEMO-0002",
+      invoiceIds: [openInvoices[1].id],
+      receivedById: financeUser.id,
+    });
+
+    // approved scholarship + payment plan for the partial payer
+    const scholarship = await createDiscount({
+      schoolId: school.id,
+      name: "Merit Scholarship 25%",
+      type: "SCHOLARSHIP",
+      value: 25,
+      scope: "STUDENT",
+      studentId: openInvoices[0].studentId,
+      reason: "Top 5% performance (demo)",
+      createdById: financeUser.id,
+    });
+    await reviewDiscount({ discountId: scholarship.id, schoolId: school.id, action: "APPROVE", actorId: financeUser.id });
+
+    const remaining = due1 - Math.round(due1 * 0.5 * 100) / 100;
+    await createPaymentPlan({
+      schoolId: school.id,
+      studentId: openInvoices[1].studentId,
+      invoiceId: openInvoices[1].id,
+      totalAmount: remaining,
+      installmentAmount: Math.round((remaining / 4) * 100) / 100,
+      installmentCount: 4,
+      frequency: "MONTHLY",
+      createdById: financeUser.id,
+    });
+  }
+
+  // gateway config (architecture-ready, inactive)
+  await prisma.paymentGatewayConfig.create({
+    data: {
+      schoolId: school.id,
+      gateway: "paystack",
+      isActive: false,
+      testMode: true,
+      publicKey: "pk_test_demo",
+      secretKey: "sk_test_demo",
+    },
+  });
+
   // Create Fee Records
   for (const student of students.slice(0, 10)) {
     for (const fee of fees) {
@@ -629,6 +761,7 @@ async function main() {
   console.log("   Parent:  parent@eduflow.com / password123");
   console.log("   Student: student@eduflow.com / password123");
   console.log(`📊 Phase 4: ${assessmentTypes.length} assessment types, 6 grade bands, ${publishedResults.length} published results, 5 report cards`);
+  console.log(`💰 Phase 5: ${feeCategories.length} fee categories, ${openInvoices.length} invoices, 2 demo payments with receipts, 1 approved scholarship, 1 payment plan`);
 }
 
 /** Deterministic PRNG so the seed is reproducible. */

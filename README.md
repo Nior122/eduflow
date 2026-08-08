@@ -129,3 +129,29 @@ SEED_CONFIRM=yes npm run db:seed   # demo data incl. published results + report 
 ```
 
 New Phase 4 admin pages: Examinations · Assessment Config · Grade Scale · Results & Approval · Report Cards · Promotions · Analytics · Transcripts. Teacher: Score Entry (+ updated Results). Student/Parent: results + printable report cards.
+
+## Phase 5 — Finance, Fees & Accounting System
+
+Complete school financial management (built on the Phase 1-4 base):
+
+- **Fee structure** — 14 built-in fee categories (Tuition, Admission, Books, Uniform, Development Levy, Transport, Hostel, Lab, Sports, Exam, Library, PTA, ICT, Graduation) + custom categories; fees support session, term, class/department scope, amount, due date, optional, recurring and late-fee flags
+- **Student billing** — bulk invoice generation per class / department / whole school / selected students and fees; one invoice per student bundling items; duplicate prevention (open invoices block re-billing); manual draft invoices with issue/cancel workflow (paid invoices cannot be cancelled)
+- **Payments** — cash / bank transfer / POS / mobile money / cheque with FIFO allocation across open invoices; partial payments supported; duplicate references rejected; overpayments blocked; balances recalculate automatically; cashier attribution
+- **Receipts** — auto-generated numbered receipts (RCP-YYYY-####) with school header, method, cashier, outstanding balance, signature area and QR verification code; printable A4 page (`/receipts/[id]`) + verify endpoint
+- **Discounts & scholarships** — percentage/fixed/waiver/scholarship/sibling/staff with student/class/school/fee scope; approval workflow (PENDING → APPROVED/REJECTED, becomes ACTIVE on first application); value validation (percent ≤ 100, fixed ≤ invoice total)
+- **Outstanding & plans** — overdue auto-detection (past-due invoices flip to OVERDUE with LatePayment records + late-fee capture), defaulter list, reminder queue (mark SENT), installment payment plans with completion/cancellation
+- **Financial reports** — daily/weekly/monthly/annual/custom revenue, outstanding, discounts summary, payment-method breakdown, monthly cash flow, revenue by class and department; CSV export for every report
+- **Finance dashboard** — today/month revenue, outstanding, students owing, collection rate, overdue count, 12-month revenue chart, method breakdown, recent payments & receipts
+- **Audit trail** — every financial action logged (who, what, when, old/new values, IP): fee/category CRUD, billing, payments, receipts, discounts, plans, reminders, gateway changes
+- **Payment gateway architecture** — provider-agnostic abstraction (Paystack / Flutterwave / Stripe adapters behind one interface), per-school config with single-active enforcement, initialize/verify endpoints — no provider hardcoded, adapters refuse without keys
+- **Finance role** — new `FINANCE_OFFICER` role with its own nav, API gates and dashboard; admins retain full access
+
+### Phase 5 verification
+```bash
+npx prisma validate            # schema valid (55 models)
+npm run typecheck              # 0 TS errors
+npm run build                  # production build passes
+SEED_CONFIRM=yes npm run db:seed   # demo finance data (14 categories, 6 invoices, payments, receipts, scholarship, plan)
+```
+
+New finance pages: Finance Dashboard · Billing & Invoices · Payments · Receipts (+ printable) · Discounts & Scholarships · Outstanding & Plans · Finance Reports (CSV) · Audit Log · Payment Gateways. Demo login: `finance@eduflow.com / password123`.
