@@ -67,14 +67,14 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
       if (!dept) return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
-    const updateData: Prisma.TeacherUpdateInput = {
+    const updateData: Prisma.TeacherUncheckedUpdateInput = {
       ...(data.firstName !== undefined && { firstName: data.firstName }),
       ...(data.lastName !== undefined && { lastName: data.lastName }),
       ...(data.phone !== undefined && { phone: data.phone ?? null }),
       ...(data.address !== undefined && { address: data.address ?? null }),
       ...(data.qualification !== undefined && { qualification: data.qualification ?? null }),
       ...(data.specialization !== undefined && { specialization: data.specialization ?? null }),
-      ...(data.employeeDate !== undefined && { employeeDate: data.employeeDate ? new Date(data.employeeDate) : null }),
+      ...(data.employeeDate !== undefined && { employeeDate: data.employeeDate ? new Date(data.employeeDate) : undefined }),
       ...(data.staffId !== undefined && { staffId: data.staffId ?? null }),
       ...(data.yearsOfExperience !== undefined && { yearsOfExperience: data.yearsOfExperience }),
       ...(data.salaryGrade !== undefined && { salaryGrade: data.salaryGrade ?? null }),

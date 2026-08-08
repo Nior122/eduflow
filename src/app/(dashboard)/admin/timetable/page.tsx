@@ -100,7 +100,6 @@ export default function AdminTimetablePage() {
       toast({
         title: err instanceof Error ? err.message : "Failed to schedule lesson",
         variant: "destructive",
-        duration: 6000,
       });
     } finally {
       setSaving(false);

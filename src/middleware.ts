@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
+import { authMiddleware as auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
+const ADMIN_ROLES: readonly string[] = ["SUPER_ADMIN", "SCHOOL_ADMIN"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -24,14 +24,13 @@ export default auth((req) => {
   }
 
   if (!session) {
+    // Public routes (incl. /api/auth/*) pass through — NextAuth handles them.
+    if (isPublic) return NextResponse.next();
     // API routes must answer with JSON, not an HTML redirect
     if (isApi) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!isPublic) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   const role = session.user.role;

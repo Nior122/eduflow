@@ -104,3 +104,28 @@ npx prisma migrate deploy
 - AI routes are rate-limited (in-memory, per instance) — swap `src/lib/rate-limit.ts` for a shared store (e.g. Upstash Redis) before horizontal scaling.
 - File attachments on assignments/homework are stored as URLs/text — a real upload endpoint (e.g. Vercel Blob) can be added without schema changes.
 - No files are uploaded yet; the UI renders user and AI content as escaped text (no `dangerouslySetInnerHTML`).
+
+## Phase 4 — Examinations, Results & Report Card System
+
+Complete academic assessment lifecycle (built on the Phase 1-3 base):
+
+- **Examinations** — create/edit/activate/archive/duplicate per session + term, with class assignments
+- **Assessment configuration** — school-defined components (Assignment 10% · Class Test 20% · Project 10% · Exam 60%) with per-term weight/max-score overrides (weights must total 100%)
+- **Grade engine** — school-configurable percentage bands (default A=70+ … F<40), GPA + remark, band-gap safe (decimal totals)
+- **Score entry** — spreadsheet grid for teachers, bulk upsert with validation (no negatives, no above-max, duplicates prevented by unique constraints), client-side totals preview, recalculate → weighted totals, grades, subject & class positions (standard competition ranking with tie handling)
+- **Approval workflow** — Draft → Submitted → Approved → Published → Locked with full audit trail; publishing blocked while any result in the sheet is unapproved; role-gated actions (teachers submit, admins approve/publish/lock)
+- **Report cards** — generate per class/term from published results; overall average, grade, class position, attendance %, promotion status, teacher/principal comments, signature & stamp placeholders, QR verification code; printable A4 layout (`/report-cards/[id]`)
+- **Transcripts** — full academic history per student (every session × term, promotion & transfer history, attendance summary, graduation records)
+- **Analytics** — class/school dashboards: averages, pass/fail rates, grade distribution, subject comparison, best/weakest subjects, term trends
+- **Promotions** — suggestion engine (promote when average ≥ 50 with no failing subject), apply promote/repeat/graduate/transfer/archive with history
+- **Role security** — teachers restricted to assigned classes/subjects; students & parents read-only; admins own the workflow
+
+### Phase 4 verification
+```bash
+npx prisma validate            # schema valid (44 models)
+npm run typecheck              # 0 TS errors
+npm run build                  # production build passes
+SEED_CONFIRM=yes npm run db:seed   # demo data incl. published results + report cards
+```
+
+New Phase 4 admin pages: Examinations · Assessment Config · Grade Scale · Results & Approval · Report Cards · Promotions · Analytics · Transcripts. Teacher: Score Entry (+ updated Results). Student/Parent: results + printable report cards.

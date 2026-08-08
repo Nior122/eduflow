@@ -45,6 +45,17 @@ type Student = {
   class: { id: string; name: string } | null;
   parent: { id: string; firstName: string; lastName: string } | null;
   _count: { attendances: number; results: number };
+  parentRelation: string | null;
+  bloodGroup: string | null;
+  religion: string | null;
+  nationality: string | null;
+  state: string | null;
+  lga: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  previousSchool: string | null;
+  medicalInfo: string | null;
+  disabilities: string | null;
 };
 
 type TimelineEntry = { id: string; event: string; note: string | null; createdAt: string };

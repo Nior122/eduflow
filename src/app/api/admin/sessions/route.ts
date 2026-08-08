@@ -5,10 +5,11 @@ import { validate, sessionSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
+const READ_ROLES = ["TEACHER", "SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
 export async function GET() {
   const session = await auth();
-  const denied = requireRole(session, ADMIN_ROLES, { schoolScoped: true });
+  const denied = requireRole(session, READ_ROLES, { schoolScoped: true });
   if (denied) return denied;
   const schoolId = session?.user?.schoolId;
   if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

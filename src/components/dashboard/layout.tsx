@@ -20,6 +20,14 @@ import {
   CalendarDays,
   ClipboardList,
   NotebookPen,
+  SlidersHorizontal,
+  Gauge,
+  FileCheck2,
+  FileText,
+  TrendingUp,
+  LineChart,
+  ScrollText,
+  Award,
   LogOut,
   ChevronLeft,
   Menu,
@@ -55,10 +63,19 @@ const navItems: NavItem[] = [
   { label: "Timetable", icon: CalendarClock, href: "/admin/timetable", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Calendar", icon: CalendarDays, href: "/admin/calendar", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Attendance Reports", icon: BarChart3, href: "/admin/attendance-reports", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Examinations", icon: ClipboardList, href: "/admin/examinations", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Assessment Config", icon: SlidersHorizontal, href: "/admin/assessment-config", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Grade Scale", icon: Gauge, href: "/admin/grade-scale", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Results & Approval", icon: FileCheck2, href: "/admin/results", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Report Cards", icon: FileText, href: "/admin/report-cards", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Promotions", icon: TrendingUp, href: "/admin/promotions", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Analytics", icon: LineChart, href: "/admin/analytics", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Transcripts", icon: ScrollText, href: "/admin/transcripts", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/teacher/dashboard", roles: ["TEACHER"] },
   { label: "Attendance", icon: ClipboardCheck, href: "/teacher/attendance", roles: ["TEACHER"] },
-  { label: "Results", icon: FileSpreadsheet, href: "/teacher/results", roles: ["TEACHER"] },
+  { label: "Score Entry", icon: FileSpreadsheet, href: "/teacher/scores", roles: ["TEACHER"] },
+  { label: "Results", icon: ClipboardList, href: "/teacher/results", roles: ["TEACHER"] },
   { label: "Lesson Plans", icon: BookMarked, href: "/teacher/lesson-plans", roles: ["TEACHER"] },
   { label: "AI Reports", icon: Brain, href: "/teacher/report-comments", roles: ["TEACHER"] },
   { label: "Timetable", icon: CalendarClock, href: "/teacher/timetable", roles: ["TEACHER"] },
@@ -66,9 +83,11 @@ const navItems: NavItem[] = [
   { label: "Homework", icon: NotebookPen, href: "/teacher/homework", roles: ["TEACHER"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", roles: ["PARENT"] },
+  { label: "Child Results", icon: FileText, href: "/parent/results", roles: ["PARENT"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/student/dashboard", roles: ["STUDENT"] },
   { label: "Homework Help", icon: Sparkles, href: "/student/homework-assistant", roles: ["STUDENT"] },
+  { label: "My Results", icon: FileText, href: "/student/results", roles: ["STUDENT"] },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

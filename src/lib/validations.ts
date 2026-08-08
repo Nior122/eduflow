@@ -459,3 +459,101 @@ export const attendanceCorrectionSchema = z.object({
   remark: z.string().optional(),
 });
 
+
+
+// ─── Phase 4: examinations, scores, results workflow ─────────────────
+
+export const examinationSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["CA", "MID_TERM", "FINAL", "MOCK", "PROMOTION"]).default("CA"),
+  description: z.string().optional(),
+  status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]).default("DRAFT"),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  sessionId: z.string().min(1, "Session is required"),
+  termId: z.string().min(1, "Term is required"),
+  classIds: z.array(z.string()).optional(),
+});
+
+export const examinationUpdateSchema = examinationSchema.partial();
+
+export type ExaminationFormData = z.infer<typeof examinationSchema>;
+
+export const assessmentTypeSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  code: z.string().optional(),
+  kind: z.enum(["CA", "EXAM"]).default("CA"),
+  weight: z.coerce.number().int().min(0).max(100, "Weight must be 0-100"),
+  maxScore: z.coerce.number().int().min(1).max(500),
+  sortOrder: z.coerce.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+
+export const assessmentTypeUpdateSchema = assessmentTypeSchema.partial();
+
+export const gradeBandSchema = z.object({
+  name: z.string().min(1, "Grade is required"),
+  minScore: z.coerce.number().int().min(0).max(100),
+  maxScore: z.coerce.number().int().min(0).max(100),
+  remark: z.string().min(1, "Remark is required"),
+  gpa: z.coerce.number().min(0).max(5).nullable().optional(),
+  isPass: z.boolean().default(true),
+  color: z.string().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export const gradeBandBulkSchema = z.object({
+  bands: z.array(gradeBandSchema).min(1, "At least one grade band is required"),
+});
+
+export const scoreBulkSchema = z.object({
+  classId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+  sessionId: z.string().min(1, "Session is required"),
+  termId: z.string().min(1, "Term is required"),
+  rows: z
+    .array(
+      z.object({
+        studentId: z.string().min(1),
+        assessmentTypeId: z.string().min(1),
+        score: z.coerce.number().min(0, "Score cannot be negative"),
+        maxScore: z.coerce.number().int().min(1).optional(),
+      })
+    )
+    .min(1, "At least one score is required"),
+});
+
+export const recalculateSchema = z.object({
+  classId: z.string().min(1),
+  subjectId: z.string().min(1),
+  sessionId: z.string().min(1),
+  termId: z.string().min(1),
+});
+
+export const workflowSchema = z.object({
+  resultIds: z.array(z.string()).min(1, "Select at least one result"),
+  action: z.enum(["SUBMIT", "APPROVE", "PUBLISH", "LOCK", "REJECT"]),
+  note: z.string().optional(),
+});
+
+export const reportCardUpdateSchema = z.object({
+  classTeacherComment: z.string().optional(),
+  principalComment: z.string().optional(),
+  isPublished: z.boolean().optional(),
+});
+
+export const reportCardGenerateSchema = z.object({
+  classId: z.string().optional(),
+  studentId: z.string().optional(),
+  sessionId: z.string().min(1),
+  termId: z.string().min(1),
+});
+
+export const promotionApplySchema = z.object({
+  studentId: z.string().min(1),
+  action: z.enum(["PROMOTED", "REPEATED", "GRADUATED", "TRANSFERRED", "ARCHIVED"]),
+  fromClassId: z.string().min(1),
+  toClassId: z.string().nullable().optional(),
+  sessionId: z.string().min(1),
+  note: z.string().optional(),
+});

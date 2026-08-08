@@ -47,7 +47,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
     let admissionStatus: StudentAdmissionStatus = "ACTIVE";
     let event = "";
     let isActive = true;
-    const extra: Prisma.StudentUpdateInput = {};
+    const extra: Prisma.StudentUncheckedUpdateInput = {};
 
     switch (action) {
       case "SUSPEND":

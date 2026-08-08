@@ -19,7 +19,7 @@ import { toast } from "@/hooks/use-toast";
 
 type TeacherOption = { id: string; firstName: string; lastName: string; staffId: string | null };
 type StaffRecord = { id: string; teacherId: string; status: string; teacher: { firstName: string; lastName: string; staffId: string | null } };
-type ReportRow = { name: string; admissionNumber: string; class: string | null; counts: Record<string, number>; total: number; rate: number };
+type ReportRow = { id: string; name: string; admissionNumber: string; class: string | null; counts: Record<string, number>; total: number; rate: number };
 
 const STATUSES = ["PRESENT", "ABSENT", "LATE", "EXCUSED", "SICK"];
 

@@ -4,8 +4,9 @@ import { compare } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "./db";
 import type { UserRole } from "@prisma/client";
+import type { Session } from "next-auth";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   pages: {
     signIn: "/login",
     error: "/login",
@@ -95,6 +96,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+
+/**
+ * next-auth 5 beta ships `auth` with overloads that also match Next.js
+ * middleware handlers, which breaks `await auth()` in route handlers
+ * (the awaited result union-typed with AppRouteHandlerFn). Export a
+ * narrowed, session-returning wrapper so every route typechecks.
+ */
+export const auth = nextAuth.auth as unknown as () => Promise<Session | null>;
+
+/**
+ * Middleware variant of `auth` (NextAuth v5 wrapper used by
+ * src/middleware.ts) — accepts a handler receiving { req, auth }.
+ */
+export const authMiddleware = nextAuth.auth as unknown as (
+  handler: (req: Parameters<Parameters<typeof nextAuth.auth>[0]>[0] & { auth: Session | null }) => unknown
+) => (req: unknown) => unknown;
 
 // ─── Authorization helpers (Phase 1) ─────────────────────────────────
 // Central guards so every API route can enforce roles + school scoping
