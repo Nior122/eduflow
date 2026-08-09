@@ -85,3 +85,19 @@ export function getRoleBadgeColor(role: string): string {
     default: return "bg-gray-100 text-gray-700 dark:bg-gray-950/30 dark:text-gray-400";
   }
 }
+
+/** PHASE 6 — relative time helper ("5m ago", "2h ago", "3d ago"). */
+export function formatRelativeTime(input: Date | string | null | undefined): string {
+  if (!input) return "";
+  const date = typeof input === "string" ? new Date(input) : input;
+  if (Number.isNaN(date.getTime())) return "";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 45) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return formatDate(date);
+}

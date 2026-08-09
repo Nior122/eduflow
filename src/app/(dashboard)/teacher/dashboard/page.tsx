@@ -8,10 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users, BookOpen, ClipboardCheck, Brain, FileSpreadsheet,
   CalendarClock, BellRing, AlertCircle, Sparkles, NotebookPen, ClipboardList,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatRelativeTime } from "@/lib/utils";
 
 type DashboardStats = {
   students: number;
@@ -22,6 +23,8 @@ type DashboardStats = {
   awaitingGrading: number;
   todayClasses: { id: string; startTime: string; endTime: string; subject: string; className: string }[];
   upcomingEvents: { id: string; title: string; type: string; eventDate: string }[];
+  unreadNotifications: number;
+  recentMessages: { id: string; subject: string; snippet: string; createdAt: string; otherName: string; incoming: boolean }[];
 };
 
 export default function TeacherDashboardPage() {
@@ -134,6 +137,64 @@ export default function TeacherDashboardPage() {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Messages & notifications */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" /> Recent Messages
+            </CardTitle>
+            <Link href="/messages">
+              <Button variant="outline" size="sm">Open inbox</Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : (stats?.recentMessages ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">No messages yet</p>
+            ) : (
+              <div className="space-y-2">
+                {stats!.recentMessages.map((m) => (
+                  <Link key={m.id} href="/messages" className="block">
+                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm hover:bg-accent/50 transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          {m.incoming && <span className="mr-1 inline-block h-2 w-2 rounded-full bg-primary" />}
+                          {m.subject}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{m.otherName} — {m.snippet}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">{formatRelativeTime(m.createdAt)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BellRing className="h-5 w-5" /> Notifications
+            </CardTitle>
+            <Link href="/notifications">
+              <Button variant="outline" size="sm">View all</Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-4xl font-bold text-primary">{stats?.unreadNotifications ?? 0}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              unread notification{stats?.unreadNotifications === 1 ? "" : "s"}
+            </p>
+            <Link href="/notifications" className="mt-3">
+              <Button variant="ghost" size="sm">Open notification center</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

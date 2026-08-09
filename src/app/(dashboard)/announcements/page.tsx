@@ -3,6 +3,6 @@ import { AnnouncementsUI } from "@/components/portal/announcements-ui";
 
 export const metadata: Metadata = { title: "Announcements" };
 
-export default function AdminAnnouncementsPage() {
-  return <AnnouncementsUI canManage />;
+export default function AnnouncementsPage() {
+  return <AnnouncementsUI />;
 }

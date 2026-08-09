@@ -6,6 +6,8 @@ import { prisma } from "./db";
 import type { UserRole } from "@prisma/client";
 import type { Session } from "next-auth";
 
+import { logActivity } from "@/lib/notifications";
+
 const nextAuth = NextAuth({
   pages: {
     signIn: "/login",
@@ -14,6 +16,13 @@ const nextAuth = NextAuth({
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  events: {
+    async signIn({ user }) {
+      if (user?.id) {
+        await logActivity({ userId: user.id, action: "LOGIN", entityType: "User" });
+      }
+    },
   },
   providers: [
     Credentials({

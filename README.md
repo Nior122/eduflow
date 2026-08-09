@@ -155,3 +155,54 @@ SEED_CONFIRM=yes npm run db:seed   # demo finance data (14 categories, 6 invoice
 ```
 
 New finance pages: Finance Dashboard · Billing & Invoices · Payments · Receipts (+ printable) · Discounts & Scholarships · Outstanding & Plans · Finance Reports (CSV) · Audit Log · Payment Gateways. Demo login: `finance@eduflow.com / password123`.
+
+
+## Phase 6 — Portals & Communication System
+
+Everything in Phase 6 uses the production database and the same role-guarded
+API patterns as earlier phases. New in this phase:
+
+| Module | Where |
+|---|---|
+| **Parent Portal** | `/parent/*` — My Children, Attendance, Timetable, School Work (assignments + homework status), Results, Report Cards, Fees & Receipts (printable), Calendar, Announcements, Documents, Messages |
+| **Student Portal** | `/student/*` — My Timetable, Attendance, Assignments/Homework (submit + track), Results, Report Cards, Transcript, Calendar, Homework Help, Announcements, Documents, Messages |
+| **Enhanced Teacher Portal** | Dashboard now shows Today's Classes, pending attendance/grading, upcoming events, **recent messages** and **unread notifications**; full messaging with parents/students/admins |
+| **Messaging** | `/messages` — Inbox / Sent / Drafts, conversation threads, read receipts, attachments, search, soft-delete, role-scoped recipient directory (Admin<->Teacher, Admin<->Parent, Teacher<->Parent, Teacher<->Student) |
+| **Notification Center** | Bell drawer in the top bar (60s polling) + `/notifications` page + per-user preferences (email / SMS / push / in-app toggles, language, theme, 2FA-ready flag) at `/profile` |
+| **Announcements** | `/announcements` (all roles) + `/admin/announcements` (manage) — role / class / department targeting, priority, pinning, expiry dates, automatic fan-out to recipients' notification centers |
+| **School Documents** | `/documents` — handbooks, policies, timetables, study materials, forms, circulars, past questions; category filter + search; upload by teachers/admins; audience-based visibility (Everyone / Teachers / Parents / Students / Staff) |
+| **Profile & Settings** | `/profile` — avatar upload, name/phone, password change (bcrypt 12), notification preferences, theme & language, 2FA status (architecture ready) |
+| **Activity Timeline** | `/activity` — login, messages, announcements, documents, profile & password changes, preferences; paginated per user |
+
+### Storage
+Uploads (documents, message attachments, avatars) are stored locally under
+`public/uploads/<school>/...` and served statically. For serverless or
+multi-instance deploys, replace `src/lib/uploads.ts` with S3/R2 (the return
+shape stays the same). Files are validated (10 MB cap, extension allowlist).
+
+### Realtime
+The notification drawer polls `/api/notifications` every 60 seconds — a
+deliberate self-host-friendly default. The notification creation path is
+centralised in `src/lib/notifications.ts` (`notifyUser` / `logActivity` /
+`fanOutAnnouncement`), so swapping polling for SSE/WebSockets touches one
+component.
+
+### Database (Phase 6)
+New models: `SchoolDocument`, `UserPreference`, `UserActivityLog`.
+Extended: `Message` (conversations, drafts, soft-delete, attachments,
+replies, read receipts), `Announcement` (pinned, expiresAt, class &
+department targets), `Notification` (readAt, schoolId).
+
+```bash
+npx prisma migrate dev --name phase6_portals_communication
+# or: npm run db:push
+npm run db:seed   # SEED_CONFIRM=yes (wipes data; seeds Phase 6 demo docs/messages/notifications)
+```
+
+### Verification (run locally)
+```bash
+npm run typecheck   # tsc --noEmit — after `npm install` regenerates the Prisma client
+npm run lint
+npm run build
+npx prisma migrate deploy
+```

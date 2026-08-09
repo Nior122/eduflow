@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, announcementSchema } from "@/lib/validations";
+import { fanOutAnnouncement, logActivity } from "@/lib/notifications";
 import { Prisma } from "@prisma/client";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
@@ -37,6 +38,13 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
+    if (data.audience === "CLASS" && !data.targetClassId) {
+      return NextResponse.json({ error: "Select a class for class-targeted announcements" }, { status: 400 });
+    }
+    if (data.audience === "DEPARTMENT" && !data.targetDepartmentId) {
+      return NextResponse.json({ error: "Select a department for department-targeted announcements" }, { status: 400 });
+    }
+
     const announcement = await prisma.announcement.create({
       data: {
         title: data.title,
@@ -44,10 +52,35 @@ export async function POST(req: Request) {
         priority: data.priority,
         audience: data.audience,
         published: true,
+        pinned: data.pinned,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        targetClassId: data.targetClassId ?? null,
+        targetDepartmentId: data.targetDepartmentId ?? null,
+        attachmentUrl: data.attachmentUrl ?? null,
         schoolId,
         authorId: session?.user?.id ?? null,
       },
     });
+
+    await fanOutAnnouncement({
+      id: announcement.id,
+      schoolId,
+      audience: announcement.audience,
+      targetClassId: announcement.targetClassId,
+      targetDepartmentId: announcement.targetDepartmentId,
+      title: announcement.title,
+      content: announcement.content,
+    });
+
+    await logActivity({
+      userId: session!.user!.id,
+      schoolId,
+      action: "ANNOUNCEMENT_CREATED",
+      entityType: "Announcement",
+      entityId: announcement.id,
+      metadata: { title: announcement.title, audience: announcement.audience },
+    });
+
     return NextResponse.json({ announcement }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

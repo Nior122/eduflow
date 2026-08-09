@@ -9,6 +9,7 @@ import type { Prisma } from "@prisma/client";
 
 type ConvItem = {
   key: string;
+  lastId: string;
   other: { id: string; name: string; role: string } | null;
   subject: string;
   snippet: string;
@@ -80,6 +81,7 @@ export async function GET(req: Request) {
     });
     items.push({
       key,
+      lastId: m.id,
       other:
         folder === "drafts"
           ? m.receiver

@@ -23,7 +23,8 @@ export async function GET() {
     });
     const classIds = classSubjects.map((cs) => cs.classId);
 
-    const [studentsCount, todayAttendances, todayClasses, upcomingEvents, gradingQueue, pendingHomework] = await Promise.all([
+    const userId = session!.user!.id;
+    const [studentsCount, todayAttendances, todayClasses, upcomingEvents, gradingQueue, pendingHomework, recentMessages, unreadNotifications] = await Promise.all([
       prisma.student.count({
         where: { schoolId, isActive: true, classId: { in: classIds } },
       }),
@@ -50,6 +51,16 @@ export async function GET() {
       prisma.homeworkSubmission.count({
         where: { homework: { schoolId, teacherId }, grade: null },
       }),
+      prisma.message.findMany({
+        where: { OR: [{ senderId: userId }, { receiverId: userId }], isDraft: false },
+        include: {
+          sender: { select: { id: true, name: true } },
+          receiver: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.notification.count({ where: { userId, read: false } }),
     ]);
 
     const classes = [...new Set(classSubjects.map((cs) => cs.class.name))];
@@ -83,6 +94,15 @@ export async function GET() {
         title: e.title,
         type: e.type,
         eventDate: e.eventDate.toISOString(),
+      })),
+      unreadNotifications,
+      recentMessages: recentMessages.map((m) => ({
+        id: m.id,
+        subject: m.subject,
+        snippet: m.content.slice(0, 80),
+        createdAt: m.createdAt.toISOString(),
+        otherName: m.senderId === userId ? (m.receiver.name ?? "Unknown") : (m.sender.name ?? "Unknown"),
+        incoming: m.senderId !== userId,
       })),
     });
   } catch (error) {

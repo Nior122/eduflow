@@ -41,10 +41,17 @@ import {
   BookMarked,
   Home,
   Sparkles,
+  Mail,
+  Bell,
+  FolderOpen,
+  UserRound,
+  Activity,
+  CalendarRange,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { getInitials } from "@/lib/utils";
 import { useMemo, useState } from "react";
+import { NotificationDrawer } from "@/components/portal/notification-drawer";
 
 type NavItem = {
   label: string;
@@ -87,6 +94,11 @@ const navItems: NavItem[] = [
   { label: "Promotions", icon: TrendingUp, href: "/admin/promotions", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Analytics", icon: LineChart, href: "/admin/analytics", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "Transcripts", icon: ScrollText, href: "/admin/transcripts", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Documents", icon: FolderOpen, href: "/documents", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Messages", icon: Mail, href: "/messages", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "Notifications", icon: Bell, href: "/notifications", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "My Profile", icon: UserRound, href: "/profile", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "My Activity", icon: Activity, href: "/activity", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/teacher/dashboard", roles: ["TEACHER"] },
   { label: "Attendance", icon: ClipboardCheck, href: "/teacher/attendance", roles: ["TEACHER"] },
@@ -97,14 +109,55 @@ const navItems: NavItem[] = [
   { label: "Timetable", icon: CalendarClock, href: "/teacher/timetable", roles: ["TEACHER"] },
   { label: "Assignments", icon: ClipboardList, href: "/teacher/assignments", roles: ["TEACHER"] },
   { label: "Homework", icon: NotebookPen, href: "/teacher/homework", roles: ["TEACHER"] },
+  { label: "Announcements", icon: Megaphone, href: "/announcements", roles: ["TEACHER"] },
+  { label: "Documents", icon: FolderOpen, href: "/documents", roles: ["TEACHER"] },
+  { label: "Messages", icon: Mail, href: "/messages", roles: ["TEACHER"] },
+  { label: "Notifications", icon: Bell, href: "/notifications", roles: ["TEACHER"] },
+  { label: "My Profile", icon: UserRound, href: "/profile", roles: ["TEACHER"] },
+  { label: "My Activity", icon: Activity, href: "/activity", roles: ["TEACHER"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", roles: ["PARENT"] },
-  { label: "Child Results", icon: FileText, href: "/parent/results", roles: ["PARENT"] },
+  { label: "My Children", icon: Users, href: "/parent/children", roles: ["PARENT"] },
+  { label: "Attendance", icon: ClipboardCheck, href: "/parent/attendance", roles: ["PARENT"] },
+  { label: "Timetable", icon: CalendarClock, href: "/parent/timetable", roles: ["PARENT"] },
+  { label: "School Work", icon: NotebookPen, href: "/parent/schoolwork", roles: ["PARENT"] },
+  { label: "Results", icon: FileText, href: "/parent/results", roles: ["PARENT"] },
+  { label: "Report Cards", icon: Award, href: "/parent/report-cards", roles: ["PARENT"] },
+  { label: "Fees & Receipts", icon: DollarSign, href: "/parent/fees", roles: ["PARENT"] },
+  { label: "Calendar", icon: CalendarRange, href: "/parent/calendar", roles: ["PARENT"] },
+  { label: "Announcements", icon: Megaphone, href: "/announcements", roles: ["PARENT"] },
+  { label: "Documents", icon: FolderOpen, href: "/documents", roles: ["PARENT"] },
+  { label: "Messages", icon: Mail, href: "/messages", roles: ["PARENT"] },
+  { label: "Notifications", icon: Bell, href: "/notifications", roles: ["PARENT"] },
+  { label: "My Profile", icon: UserRound, href: "/profile", roles: ["PARENT"] },
+  { label: "My Activity", icon: Activity, href: "/activity", roles: ["PARENT"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/student/dashboard", roles: ["STUDENT"] },
+  { label: "My Timetable", icon: CalendarClock, href: "/student/timetable", roles: ["STUDENT"] },
+  { label: "Attendance", icon: ClipboardCheck, href: "/student/attendance", roles: ["STUDENT"] },
+  { label: "Assignments", icon: ClipboardList, href: "/student/assignments", roles: ["STUDENT"] },
+  { label: "Homework", icon: NotebookPen, href: "/student/homework", roles: ["STUDENT"] },
+  { label: "Results", icon: FileText, href: "/student/results", roles: ["STUDENT"] },
+  { label: "Report Cards", icon: Award, href: "/student/report-card", roles: ["STUDENT"] },
+  { label: "Transcript", icon: ScrollText, href: "/student/transcript", roles: ["STUDENT"] },
+  { label: "Calendar", icon: CalendarRange, href: "/student/calendar", roles: ["STUDENT"] },
   { label: "Homework Help", icon: Sparkles, href: "/student/homework-assistant", roles: ["STUDENT"] },
-  { label: "My Results", icon: FileText, href: "/student/results", roles: ["STUDENT"] },
+  { label: "Announcements", icon: Megaphone, href: "/announcements", roles: ["STUDENT"] },
+  { label: "Documents", icon: FolderOpen, href: "/documents", roles: ["STUDENT"] },
+  { label: "Messages", icon: Mail, href: "/messages", roles: ["STUDENT"] },
+  { label: "Notifications", icon: Bell, href: "/notifications", roles: ["STUDENT"] },
+  { label: "My Profile", icon: UserRound, href: "/profile", roles: ["STUDENT"] },
+  { label: "My Activity", icon: Activity, href: "/activity", roles: ["STUDENT"] },
 ];
+
+const SHARED_TITLES: Record<string, string> = {
+  "/messages": "Messages",
+  "/notifications": "Notifications",
+  "/announcements": "Announcements",
+  "/documents": "School Documents",
+  "/profile": "My Profile",
+  "/activity": "My Activity",
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -130,7 +183,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isTeacherRoute) return "Teacher Portal";
     if (isParentRoute) return "Parent Portal";
     if (isStudentRoute) return "Student Portal";
-    return "Dashboard";
+    return SHARED_TITLES[pathname] ?? "Dashboard";
   };
 
   const user = session?.user;
@@ -244,6 +297,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Home className="h-4 w-4" />
               Home
             </Link>
+            <NotificationDrawer />
           </div>
         </header>
 
