@@ -292,7 +292,12 @@ export const announcementSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
-  audience: z.enum(["ALL", "TEACHERS", "PARENTS", "STUDENTS"]).default("ALL"),
+  audience: z.enum(["ALL", "TEACHERS", "PARENTS", "STUDENTS", "STAFF", "CLASS", "DEPARTMENT"]).default("ALL"),
+  pinned: z.boolean().default(false),
+  expiresAt: z.string().nullable().optional(),
+  targetClassId: z.string().optional(),
+  targetDepartmentId: z.string().optional(),
+  attachmentUrl: z.string().optional(),
 });
 
 export const announcementUpdateSchema = announcementSchema.partial();
@@ -665,4 +670,77 @@ export const gatewayConfigSchema = z.object({
   secretKey: z.string().optional(),
   webhookSecret: z.string().optional(),
   testMode: z.boolean().default(true),
+});
+
+
+// ─── PHASE 6: MESSAGING, NOTIFICATIONS, DOCUMENTS, PROFILE ───────────
+
+export const messageAttachmentSchema = z.object({
+  name: z.string().min(1).max(200),
+  url: z.string().min(1).max(500),
+  size: z.number().int().min(0).max(10 * 1024 * 1024),
+  mime: z.string().max(120).nullable().optional(),
+});
+
+export const messageSendSchema = z.object({
+  receiverId: z.string().min(1, "Recipient is required").optional(),
+  subject: z.string().min(1, "Subject is required").max(200),
+  content: z.string().min(1, "Message is required").max(20000),
+  replyToId: z.string().optional(),
+  isDraft: z.boolean().default(false),
+  draftId: z.string().optional(),
+  attachments: z.array(messageAttachmentSchema).max(10).optional(),
+});
+
+export const notificationMarkSchema = z.object({
+  ids: z.array(z.string()).max(500).optional(),
+  all: z.boolean().optional(),
+});
+
+export const documentCategoryValues = [
+  "HANDBOOK", "POLICY", "TIMETABLE", "STUDY_MATERIAL",
+  "FORM", "CIRCULAR", "PAST_QUESTION", "OTHER",
+] as const;
+
+export const documentAudienceValues = [
+  "ALL", "TEACHERS", "PARENTS", "STUDENTS", "STAFF",
+] as const;
+
+export const documentUploadSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  description: z.string().max(2000).optional(),
+  category: z.enum(documentCategoryValues).default("OTHER"),
+  audience: z.enum(documentAudienceValues).default("ALL"),
+});
+
+export const documentUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  category: z.enum(documentCategoryValues).optional(),
+  audience: z.enum(documentAudienceValues).optional(),
+});
+
+export const profileUpdateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(120).optional(),
+  phone: z.string().max(30).nullable().optional(),
+  image: z.string().max(500).optional(),
+});
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters").max(128),
+});
+
+export const preferencesUpdateSchema = z.object({
+  language: z.string().max(10).optional(),
+  theme: z.enum(["SYSTEM", "LIGHT", "DARK"]).optional(),
+  emailNotifications: z.boolean().optional(),
+  smsNotifications: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  inAppNotifications: z.boolean().optional(),
+});
+
+export const activityQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
 });

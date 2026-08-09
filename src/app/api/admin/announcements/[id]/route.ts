@@ -33,6 +33,11 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
       ...(data.content !== undefined && { content: data.content }),
       ...(data.priority !== undefined && { priority: data.priority }),
       ...(data.audience !== undefined && { audience: data.audience }),
+      ...(data.pinned !== undefined && { pinned: data.pinned }),
+      ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt ? new Date(data.expiresAt) : null }),
+      ...(data.targetClassId !== undefined && { targetClassId: data.targetClassId ?? null }),
+      ...(data.targetDepartmentId !== undefined && { targetDepartmentId: data.targetDepartmentId ?? null }),
+      ...(data.attachmentUrl !== undefined && { attachmentUrl: data.attachmentUrl ?? null }),
     };
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
