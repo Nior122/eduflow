@@ -21,19 +21,26 @@ export async function GET() {
       where: { studentId, status: { in: ["PUBLISHED", "LOCKED"] } },
       include: {
         subject: { select: { name: true } },
-        session: { select: { name: true } },
-        term: { select: { name: true } },
+        academicSession: { select: { name: true } },
+        academicTerm: { select: { name: true } },
       },
-      orderBy: [{ session: { name: "asc" } }, { term: { name: "asc" } }, { subject: { name: "asc" } }],
+      orderBy: [
+        { academicSession: { name: "asc" } },
+        { academicTerm: { name: "asc" } },
+        { subject: { name: "asc" } },
+      ],
     }),
     prisma.transcript.findUnique({ where: { studentId }, select: { lastGeneratedAt: true } }),
   ]);
 
-  // Group published results into session/term blocks.
+  // Group published results into session/term blocks (null-safe: legacy rows
+  // carry only the scalar session/term fields).
   const blocks = new Map<string, { sessionName: string; termName: string; rows: { subject: string; total: number; grade: string | null }[] }>();
   for (const r of results) {
-    const key = `${r.session.name}::${r.term.name}`;
-    const block = blocks.get(key) ?? { sessionName: r.session.name, termName: r.term.name, rows: [] };
+    const sessionName = r.academicSession?.name ?? r.session;
+    const termName = r.academicTerm?.name ?? String(r.term);
+    const key = `${sessionName}::${termName}`;
+    const block = blocks.get(key) ?? { sessionName, termName, rows: [] };
     block.rows.push({
       subject: r.subject.name,
       total: r.total == null ? 0 : Number(r.total),

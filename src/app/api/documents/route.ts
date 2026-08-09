@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, documentUploadSchema } from "@/lib/validations";
 import { saveUpload } from "@/lib/uploads";
 import { logActivity } from "@/lib/notifications";
-import type { UserRole } from "@prisma/client";
+import type { DocumentCategory, UserRole } from "@prisma/client";
 
 const UPLOADER_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN", "FINANCE_OFFICER"];
 const VIEWER_ROLES: UserRole[] = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"];
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     where: {
       schoolId,
       isActive: true,
-      ...(category ? { category: category as never } : {}),
+      ...(category ? { category: category as DocumentCategory } : {}),
       ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { uploader: { select: { name: true } } },

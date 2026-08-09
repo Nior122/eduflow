@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import type { UserRole } from "@prisma/client";
+import type { Prisma, UserRole } from "@prisma/client";
 
 /**
  * PHASE 6 — Notifications & activity logging helpers.
@@ -179,13 +179,19 @@ export async function fanOutAnnouncement(a: AnnouncementForFanOut): Promise<void
       return;
     }
 
-    const roleFilter =
-      audience === "TEACHERS" || audience === "STAFF" || audience === "PARENTS" || audience === "STUDENTS"
-        ? { role: audience === "STAFF" ? ({ in: ["TEACHER", "FINANCE_OFFICER", "SCHOOL_ADMIN", "SUPER_ADMIN"] } as const) : audience }
-        : undefined;
+    const roleFilter: Prisma.UserWhereInput["role"] | undefined =
+      audience === "TEACHERS"
+        ? "TEACHER"
+        : audience === "PARENTS"
+          ? "PARENT"
+          : audience === "STUDENTS"
+            ? "STUDENT"
+            : audience === "STAFF"
+              ? { in: ["TEACHER", "FINANCE_OFFICER", "SCHOOL_ADMIN", "SUPER_ADMIN"] }
+              : undefined;
 
     const users = await prisma.user.findMany({
-      where: { schoolId: a.schoolId, isActive: true, ...(roleFilter ? { role: roleFilter.role as UserRole } : {}) },
+      where: { schoolId: a.schoolId, isActive: true, ...(roleFilter !== undefined ? { role: roleFilter } : {}) },
       select: { id: true },
       take: 1000,
     });

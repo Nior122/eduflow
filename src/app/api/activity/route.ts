@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { validate, activityQuerySchema } from "@/lib/validations";
 
 const ACTIVITY_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"] as const;
 
@@ -13,14 +12,8 @@ export async function GET(req: Request) {
   const userId = session!.user!.id;
 
   const url = new URL(req.url);
-  const parsed = validate(
-    activityQuerySchema,
-    Object.fromEntries(["limit", "offset"].map((k) => [k, url.searchParams.get(k)]))
-  );
-  if (!parsed.ok) {
-    return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
-  }
-  const { limit, offset } = parsed.data;
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 20, 1), 100);
+  const offset = Math.max(Number(url.searchParams.get("offset")) || 0, 0);
 
   const [logs, total] = await Promise.all([
     prisma.userActivityLog.findMany({

@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatRelativeTime } from "@/lib/utils";
 
 export type NotificationItem = {

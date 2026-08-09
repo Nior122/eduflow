@@ -58,9 +58,9 @@ export async function GET(req: Request) {
   const announcements = await prisma.announcement.findMany({
     where: { schoolId, isActive: true },
     include: {
-      author: { select: { name: true } },
-      targetClass: { select: { name: true } },
-      targetDepartment: { select: { name: true } },
+      author: { select: { id: true, name: true } },
+      targetClass: { select: { id: true, name: true } },
+      targetDepartment: { select: { id: true, name: true } },
     },
     orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
     take: 500,

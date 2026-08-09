@@ -19,7 +19,7 @@ type AttendanceData = {
 };
 
 export default function ParentAttendancePage() {
-  const { children, selected, selectedId, setSelectedId, loading } = useChildren();
+  const { children, selectedId, setSelectedId, loading } = useChildren();
   const [data, setData] = useState<AttendanceData | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
 
