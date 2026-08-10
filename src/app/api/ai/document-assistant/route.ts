@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validate, docAssistantSchema } from "@/lib/validations";
-import { aiStreamEvents, resolvePrompt, sseResponse, truncateText } from "@/lib/ai/core";
+import { aiStreamEvents, resolvePrompt, sseResponse } from "@/lib/ai/core";
+import { truncateText } from "@/lib/ai/providers";
 import { aiGuard } from "@/lib/ai/guard";
 import { chunkText } from "@/lib/ai/rag";
 import { extractText } from "@/lib/ai/extract";

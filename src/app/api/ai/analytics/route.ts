@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       take: 5000,
     }),
     prisma.classSubject.findMany({
-      where: { schoolId },
+      where: { class: { schoolId } },
       select: { classId: true, subjectId: true, teacherId: true },
       take: 1000,
     }),

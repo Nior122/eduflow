@@ -76,7 +76,9 @@ export const AI_TOOLS: AiToolDef[] = [
           where: { status: { notIn: ["PAID", "WAIVED"] }, student: { schoolId: ctx.schoolId } },
           _sum: { amount: true },
         }),
-        prisma.attendance.count({ where: { date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
+        prisma.attendance.count({
+          where: { date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }, student: { schoolId: ctx.schoolId } },
+        }),
       ]);
       return JSON.stringify({
         students,
