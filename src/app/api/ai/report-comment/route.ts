@@ -1,81 +1,93 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { auth } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { prisma } from "@/lib/db";
+import { validate, reportCommentSchema } from "@/lib/validations";
+import { aiComplete, resolvePrompt } from "@/lib/ai/core";
+import { aiGuard } from "@/lib/ai/guard";
+import type { UserRole } from "@prisma/client";
 
-const inputSchema = z.object({
-  name: z.string().max(200).optional(),
-  mathScore: z.string().or(z.number()).optional(),
-  englishScore: z.string().or(z.number()).optional(),
-  attendance: z.string().or(z.number()).optional(),
-  behaviour: z.string().max(200).optional(),
-});
+const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
 
+/**
+ * POST /api/ai/report-comment — AI Report Comment Generator (Module 3).
+ * When a studentId is provided, real performance data is loaded and
+ * previous comments are passed along so the model does not repeat them.
+ */
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const guard = await aiGuard({ module: "report_comment", roles: STAFF_ROLES });
+  if (guard instanceof NextResponse) return guard;
+  const { session, schoolId, userId } = guard;
+
+  const body = await req.json().catch(() => null);
+  const parsed = validate(reportCommentSchema, body ?? {});
+  if (!parsed.ok) {
+    return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
   }
-  if (!rateLimit(`ai:${session.user.id}`, { limit: 30, windowMs: 60 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  const input = parsed.data;
+
+  let name = input.name ?? "the student";
+  let average = "";
+  let attendance = input.attendance;
+  let behaviour = input.behaviour ?? "Good";
+  let previousComments = "none";
+  let homeworkCompletion = "N/A";
+
+  if (input.studentId) {
+    const student = await prisma.student.findFirst({
+      where: { id: input.studentId, schoolId, isActive: true },
+      include: { class: { select: { name: true } } },
+    });
+    if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+
+    name = `${student.firstName} ${student.lastName}`;
+    const [results, attendances, prior] = await Promise.all([
+      prisma.result.findMany({
+        where: { studentId: student.id, status: { in: ["PUBLISHED", "LOCKED"] } },
+        include: { subject: { select: { name: true } } },
+        take: 60,
+      }),
+      prisma.attendance.findMany({ where: { studentId: student.id }, select: { status: true }, take: 90 }),
+      prisma.aIReportComment.findMany({
+        where: { studentId: student.id },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { content: true },
+      }),
+    ]);
+
+    const totals = results.map((r) => Number(r.total ?? 0)).filter((n) => !Number.isNaN(n));
+    if (totals.length) average = String(Math.round(totals.reduce((a, b) => a + b, 0) / totals.length));
+    const present = attendances.filter((a) => a.status === "PRESENT").length;
+    if (attendances.length) attendance = Math.round((present / attendances.length) * 100);
+    previousComments = prior.map((p) => `"${p.content.slice(0, 140)}"`).join(", ") || "none";
+    behaviour = student.class?.name ? `Class: ${student.class.name}` : "Good";
+    homeworkCompletion = "N/A";
+  } else if (input.mathScore != null && input.englishScore != null) {
+    const m = Number(input.mathScore) || 0;
+    const e = Number(input.englishScore) || 0;
+    average = String(Math.round((m + e) / 2));
   }
 
-  try {
-    const body = await req.json();
-    const parsed = inputSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Validation failed", issues: parsed.error.issues }, { status: 400 });
-    }
-    const { name = "the student", mathScore, englishScore, attendance, behaviour = "Good" } = parsed.data;
+  const performanceLevel =
+    input.commentType ??
+    (average ? (Number(average) >= 70 ? "EXCELLENT" : Number(average) >= 55 ? "AVERAGE" : "NEEDS_IMPROVEMENT") : "AVERAGE");
 
-    if (process.env.OPENAI_API_KEY) {
-      const prompt = `Generate a brief, professional report comment for a student named ${name}.
-Math Score: ${mathScore ?? "N/A"}%
-English Score: ${englishScore ?? "N/A"}%
-Attendance: ${attendance ?? "N/A"}%
-Behaviour: ${behaviour}
+  const prompt = await resolvePrompt(schoolId, "report_comment", {
+    name,
+    performanceLevel,
+    average: average || "N/A",
+    attendance: String(attendance ?? "N/A"),
+    homeworkCompletion,
+    behaviour,
+    term: input.term ?? "this term",
+    previousComments,
+  });
 
-Write 3-4 sentences in a supportive, constructive tone. Mention strengths and areas for improvement.`;
+  const result = await aiComplete({
+    schoolId,
+    userId,
+    module: "report_comment",
+    messages: [{ role: "user", content: prompt }],
+  });
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 300,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const comment = data.choices?.[0]?.message?.content ?? "";
-        if (comment) return NextResponse.json({ comment });
-      }
-    }
-
-    // Fallback
-    const m = parseFloat(String(mathScore ?? 0)) || 0;
-    const e = parseFloat(String(englishScore ?? 0)) || 0;
-    const avg = (m + e) / 2;
-    let comment = `${name} has `;
-    if (avg >= 70) comment += "demonstrated excellent academic performance this term, showing a strong grasp of the material. ";
-    else if (avg >= 55) comment += "shown good progress and consistent effort in their studies this term. ";
-    else comment += "shown potential but needs to apply more effort to meet academic expectations. ";
-
-    if (m > e + 10) comment += "Mathematics is a clear strength. ";
-    else if (e > m + 10) comment += "English Language skills are commendable. ";
-
-    const att = parseInt(String(attendance ?? 0)) || 0;
-    if (att >= 90) comment += "Attendance has been excellent. ";
-    else if (att >= 75) comment += "Attendance is satisfactory. ";
-    else comment += "Regular attendance is needed to improve performance. ";
-
-    comment += `Behaviour in class has been ${behaviour.toLowerCase() || "good"}. Continue striving for excellence!`;
-
-    return NextResponse.json({ comment });
-  } catch (error) {
-    console.error("Report comment generation error:", error);
-    return NextResponse.json({ error: "Failed to generate comment" }, { status: 500 });
-  }
+  return NextResponse.json({ comment: result.text.trim(), commentType: performanceLevel });
 }
