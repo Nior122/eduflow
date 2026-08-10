@@ -311,6 +311,8 @@ export const lessonPlanSchema = z.object({
   class: z.string().min(1, "Class is required"),
   topic: z.string().min(1, "Topic is required"),
   duration: z.string().min(1, "Duration is required"),
+  objectives: z.string().max(1000).optional(),
+  curriculum: z.string().max(3000).optional(),
 });
 
 export type LessonPlanFormData = z.infer<typeof lessonPlanSchema>;
@@ -743,4 +745,120 @@ export const preferencesUpdateSchema = z.object({
 export const activityQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+});
+
+// ─── PHASE 7: EDUFLOW AI ────────────────────────────────────────────
+
+export const aiChatSchema = z.object({
+  message: z.string().min(1, "Message is required").max(8000),
+  conversationId: z.string().optional(),
+});
+
+export const reportCommentSchema = z.object({
+  studentId: z.string().optional(),
+  name: z.string().max(200).optional(),
+  mathScore: z.union([z.string(), z.number()]).optional(),
+  englishScore: z.union([z.string(), z.number()]).optional(),
+  attendance: z.union([z.string(), z.number()]).optional(),
+  behaviour: z.string().max(500).optional(),
+  commentType: z.enum(["EXCELLENT", "AVERAGE", "POOR", "NEEDS_IMPROVEMENT"]).optional(),
+  term: z.string().max(50).optional(),
+});
+
+export const homeworkAssistantSchema = z.object({
+  question: z.string().min(1, "Question is required").max(4000),
+  subjectTopic: z.string().max(200).optional(),
+});
+
+export const performanceSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+});
+
+export const riskSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  save: z.boolean().optional(),
+});
+
+export const questionTypes = [
+  "MCQ", "THEORY", "TRUE_FALSE", "FILL_BLANK", "MATCHING", "PRACTICAL",
+] as const;
+
+export const questionGenSchema = z.object({
+  subject: z.string().min(1, "Subject is required"),
+  className: z.string().optional(),
+  topic: z.string().min(1, "Topic is required"),
+  difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
+  count: z.coerce.number().int().min(1).max(20).default(10),
+  types: z.array(z.enum(questionTypes)).min(1).default(["MCQ", "THEORY"]),
+});
+
+export const examGenSchema = z.object({
+  subject: z.string().min(1, "Subject is required"),
+  className: z.string().optional(),
+  topic: z.string().min(1, "Topic is required"),
+  durationMins: z.coerce.number().int().min(10).max(300).default(60),
+  bloom: z.string().max(200).optional(),
+});
+
+export const parentCommScenarios = [
+  "PROGRESS_REPORT", "ATTENDANCE_WARNING", "CONGRATULATIONS", "REMINDER", "BEHAVIOR_REPORT",
+] as const;
+
+export const parentCommSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  scenario: z.enum(parentCommScenarios),
+  notes: z.string().max(1000).optional(),
+});
+
+export const parentCommSendSchema = z.object({
+  studentId: z.string().min(1, "Student is required"),
+  subject: z.string().min(1, "Subject is required").max(200),
+  content: z.string().min(1, "Message is required").max(5000),
+});
+
+export const docAssistantSchema = z.object({
+  action: z.enum(["summarize", "ask"]),
+  question: z.string().max(2000).optional(),
+});
+
+export const kbQuerySchema = z.object({
+  question: z.string().min(1, "Question is required").max(2000),
+});
+
+export const aiProviderIds = [
+  "openai", "anthropic", "gemini", "groq", "openrouter", "github", "cloudflare",
+] as const;
+
+export const aiSettingsSchema = z.object({
+  provider: z.enum(aiProviderIds).optional(),
+  model: z.string().max(120).nullable().optional(),
+  temperature: z.coerce.number().min(0).max(2).optional(),
+  maxTokens: z.coerce.number().int().min(64).max(16384).optional(),
+  streamingEnabled: z.boolean().optional(),
+  fallbackProvider: z.boolean().optional(),
+  monthlyBudgetCents: z.coerce.number().int().min(0).max(100000000).optional(),
+  modulesEnabled: z.record(z.string(), z.boolean()).optional(),
+  rolePermissions: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export const aiSettingsTestSchema = z.object({
+  provider: z.enum(aiProviderIds).optional(),
+  model: z.string().max(120).optional(),
+});
+
+export const promptTemplateSchema = z.object({
+  key: z
+    .string()
+    .regex(/^[a-z0-9_]+$/, "Key must be lowercase letters, numbers and underscores")
+    .min(2)
+    .max(60),
+  name: z.string().min(1, "Name is required").max(120),
+  description: z.string().max(500).optional(),
+  content: z.string().min(10, "Prompt content is too short"),
+});
+
+export const promptTemplateUpdateSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  description: z.string().max(500).nullable().optional(),
+  content: z.string().min(10).optional(),
 });

@@ -160,6 +160,12 @@ model User {
   preference             UserPreference?
   activityLogs           UserActivityLog[]
   uploadedDocuments      SchoolDocument[]    @relation("DocumentUploader")
+  aiConversations        AiConversation[]
+  aiUsageLogs            AiUsageLog[]
+  knowledgeUploads       KnowledgeBaseDocument[] @relation("KBUploader")
+  promptEdits            PromptTemplate[]       @relation("PromptEditor")
+  questionBank           QuestionBank[]         @relation("QuestionAuthor")
+  examsGenerated         GeneratedExam[]        @relation("ExamAuthor")
 
   @@index([email])
   @@index([role])
@@ -237,6 +243,13 @@ model School {
   payments      Payment[]
   announcements Announcement[]
   documents      SchoolDocument[]
+  aiSetting           AiSetting?
+  promptTemplates     PromptTemplate[]
+  aiConversations     AiConversation[]
+  aiUsageLogs         AiUsageLog[]
+  knowledgeDocuments  KnowledgeBaseDocument[]
+  questionBank        QuestionBank[]
+  examsGenerated      GeneratedExam[]
   lessonPlans   LessonPlan[]
   departments  Department[]
   sessions     AcademicSession[]
@@ -430,6 +443,8 @@ model Class {
   fromPromotions    PromotionRecord[] @relation("PromotionFromClass")
   toPromotions      PromotionRecord[] @relation("PromotionToClass")
   announcements     Announcement[]
+  questions         QuestionBank[]
+  generatedExams    GeneratedExam[]
   fees              Fee[]
   discounts         Discount[]
 
@@ -466,6 +481,9 @@ model Subject {
 
   @@unique([name, schoolId])
   @@index([schoolId])
+  questions         QuestionBank[]
+  generatedExams    GeneratedExam[]
+
 }
 
 // ─── CLASS-SUBJECT (Many-to-Many with Teacher) ──────────────────────
@@ -815,6 +833,182 @@ model UserActivityLog {
   @@index([entityType, entityId])
 }
 
+// ─── PHASE 7: EDUFLOW AI ───────────────────────────────────────────
+
+enum KbSourceType {
+  TEXT
+  PDF
+  WORD
+  EXCEL
+  OTHER
+}
+
+enum QuestionType {
+  MCQ
+  THEORY
+  TRUE_FALSE
+  FILL_BLANK
+  MATCHING
+  PRACTICAL
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model AiSetting {
+  id                 String   @id @default(cuid())
+  provider           String   @default("openai") // openai | anthropic | gemini | groq | openrouter | github | cloudflare
+  model              String?
+  temperature        Float    @default(0.7)
+  maxTokens          Int      @default(2048)
+  streamingEnabled   Boolean  @default(true)
+  modulesEnabled     Json?    // { lesson_planner: true, ... }
+  rolePermissions    Json?    // per-module role gating
+  monthlyBudgetCents Int      @default(20000)
+  fallbackProvider   Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  schoolId String @unique
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+}
+
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  key         String
+  name        String
+  description String?
+  content     String   @db.Text
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId    String
+  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  updatedById String?
+  updatedBy   User?   @relation("PromptEditor", fields: [updatedById], references: [id])
+
+  @@unique([schoolId, key, version])
+  @@index([schoolId, key, isActive])
+}
+
+model AiConversation {
+  id        String   @id @default(cuid())
+  module    String   @default("assistant")
+  title     String   @default("New chat")
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@index([schoolId])
+}
+
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  module           String
+  provider         String
+  model            String?
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  costUsd          Float    @default(0)
+  latencyMs        Int      @default(0)
+  status           String   @default("OK")
+  error            String?
+  createdAt        DateTime @default(now())
+
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, createdAt])
+  @@index([userId, createdAt])
+  @@index([module, createdAt])
+}
+
+model KnowledgeBaseDocument {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  sourceType   KbSourceType @default(TEXT)
+  fileName     String?
+  fileUrl      String?
+  content      String?      @db.Text
+  chunks       Json?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  schoolId     String
+  school       School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  uploadedById String?
+  uploadedBy   User?   @relation("KBUploader", fields: [uploadedById], references: [id])
+
+  @@index([schoolId, isActive])
+}
+
+model QuestionBank {
+  id          String             @id @default(cuid())
+  topic       String
+  difficulty  QuestionDifficulty @default(MEDIUM)
+  type        QuestionType       @default(MCQ)
+  question    String             @db.Text
+  options     Json?
+  answer      String             @db.Text
+  explanation String?            @db.Text
+  marks       Int                @default(1)
+  aiGenerated Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  classId     String?
+  class       Class?   @relation(fields: [classId], references: [id])
+  createdById String?
+  createdBy   User?    @relation("QuestionAuthor", fields: [createdById], references: [id])
+
+  @@index([schoolId, subjectId])
+  @@index([schoolId, classId])
+  @@index([difficulty])
+}
+
+model GeneratedExam {
+  id            String   @id @default(cuid())
+  title         String
+  instructions  String?  @db.Text
+  durationMins  Int?
+  sections      Json
+  markingScheme Json?
+  answerKey     Json?
+  difficultyCoverage Json?
+  createdAt     DateTime @default(now())
+
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  classId     String?
+  class       Class?   @relation(fields: [classId], references: [id])
+  createdById String?
+  createdBy   User?    @relation("ExamAuthor", fields: [createdById], references: [id])
+
+  @@index([schoolId, createdAt])
+}
+
 // ─── AI GENERATED CONTENT ──────────────────────────────────────────
 
 model LessonPlan {
@@ -831,6 +1025,7 @@ model LessonPlan {
   studentActivity String   @db.Text
   assessment      String   @db.Text
   homework        String   @db.Text
+  extensionActivities String? @db.Text
   aiGenerated     Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -848,6 +1043,8 @@ model AIReportComment {
   id        String   @id @default(cuid())
   content   String   @db.Text
   isEdited  Boolean  @default(false)
+  commentType String?   // EXCELLENT | AVERAGE | POOR | NEEDS_IMPROVEMENT
+  term      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
