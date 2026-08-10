@@ -47,11 +47,16 @@ import {
   UserRound,
   Activity,
   CalendarRange,
+  FileQuestion,
+  ShieldAlert,
+  MessageSquareHeart,
+  Database,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { getInitials } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { NotificationDrawer } from "@/components/portal/notification-drawer";
+import { AssistantWidget } from "@/components/ai/assistant-widget";
 
 type NavItem = {
   label: string;
@@ -99,6 +104,12 @@ const navItems: NavItem[] = [
   { label: "Notifications", icon: Bell, href: "/notifications", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "My Profile", icon: UserRound, href: "/profile", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
   { label: "My Activity", icon: Activity, href: "/activity", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Analytics", icon: BarChart3, href: "/admin/ai-analytics", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Settings", icon: Settings, href: "/admin/ai-settings", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Prompts", icon: FileText, href: "/admin/ai-prompts", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Usage", icon: BarChart3, href: "/admin/ai-usage", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Knowledge Base", icon: Database, href: "/admin/ai-knowledge-base", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
+  { label: "AI Documents", icon: FolderOpen, href: "/ai-documents", roles: ["SUPER_ADMIN", "SCHOOL_ADMIN"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/teacher/dashboard", roles: ["TEACHER"] },
   { label: "Attendance", icon: ClipboardCheck, href: "/teacher/attendance", roles: ["TEACHER"] },
@@ -115,6 +126,11 @@ const navItems: NavItem[] = [
   { label: "Notifications", icon: Bell, href: "/notifications", roles: ["TEACHER"] },
   { label: "My Profile", icon: UserRound, href: "/profile", roles: ["TEACHER"] },
   { label: "My Activity", icon: Activity, href: "/activity", roles: ["TEACHER"] },
+  { label: "AI Questions", icon: FileQuestion, href: "/teacher/ai-questions", roles: ["TEACHER"] },
+  { label: "AI Exams", icon: GraduationCap, href: "/teacher/ai-exams", roles: ["TEACHER"] },
+  { label: "AI Risk", icon: ShieldAlert, href: "/teacher/ai-risk", roles: ["TEACHER"] },
+  { label: "AI Communication", icon: MessageSquareHeart, href: "/teacher/ai-communication", roles: ["TEACHER"] },
+  { label: "AI Documents", icon: FolderOpen, href: "/ai-documents", roles: ["TEACHER"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard", roles: ["PARENT"] },
   { label: "My Children", icon: Users, href: "/parent/children", roles: ["PARENT"] },
@@ -131,6 +147,7 @@ const navItems: NavItem[] = [
   { label: "Notifications", icon: Bell, href: "/notifications", roles: ["PARENT"] },
   { label: "My Profile", icon: UserRound, href: "/profile", roles: ["PARENT"] },
   { label: "My Activity", icon: Activity, href: "/activity", roles: ["PARENT"] },
+  { label: "AI Performance", icon: Sparkles, href: "/parent/ai-performance", roles: ["PARENT"] },
 
   { label: "Dashboard", icon: LayoutDashboard, href: "/student/dashboard", roles: ["STUDENT"] },
   { label: "My Timetable", icon: CalendarClock, href: "/student/timetable", roles: ["STUDENT"] },
@@ -148,6 +165,7 @@ const navItems: NavItem[] = [
   { label: "Notifications", icon: Bell, href: "/notifications", roles: ["STUDENT"] },
   { label: "My Profile", icon: UserRound, href: "/profile", roles: ["STUDENT"] },
   { label: "My Activity", icon: Activity, href: "/activity", roles: ["STUDENT"] },
+  { label: "My AI Performance", icon: Sparkles, href: "/student/ai-performance", roles: ["STUDENT"] },
 ];
 
 const SHARED_TITLES: Record<string, string> = {
@@ -304,6 +322,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Page Content */}
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <AssistantWidget />
     </div>
   );
 }

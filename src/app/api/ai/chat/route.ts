@@ -67,8 +67,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: ev.message }, { status: 502 });
       }
     }
-    await persistConversation(conversation?.id ?? null, userId, schoolId, history, text);
-    return NextResponse.json({ text });
+    const savedId = await persistConversation(conversation?.id ?? null, userId, schoolId, history, text);
+    return NextResponse.json({ text, conversationId: savedId });
   }
 
   return sseResponse(wrapWithSave(gen, conversation?.id ?? null, userId, schoolId, history));
@@ -80,7 +80,7 @@ async function persistConversation(
   schoolId: string,
   history: AiMessage[],
   text: string
-): Promise<void> {
+): Promise<string | null> {
   try {
     const title = (history.find((m) => m.role === "user")?.content ?? "New chat").slice(0, 60);
     const messages: AiMessage[] = [...history, { role: "assistant", content: text || "(no response)" }];
@@ -89,13 +89,15 @@ async function persistConversation(
         where: { id: conversationId },
         data: { title, messages, updatedAt: new Date() },
       });
-    } else {
-      await prisma.aiConversation.create({
-        data: { userId, schoolId, module: "assistant", title, messages },
-      });
+      return conversationId;
     }
+    const row = await prisma.aiConversation.create({
+      data: { userId, schoolId, module: "assistant", title, messages },
+    });
+    return row.id;
   } catch (error) {
     console.error("persistConversation failed:", error);
+    return null;
   }
 }
 
@@ -111,9 +113,11 @@ function wrapWithSave(
     for await (const ev of gen) {
       if (ev.type === "text") text += ev.delta;
       if (ev.type === "done") {
-        await persistConversation(conversationId, userId, schoolId, history, text);
+        const savedId = await persistConversation(conversationId, userId, schoolId, history, text);
+        yield { ...ev, conversationId: savedId };
+      } else {
+        yield ev;
       }
-      yield ev;
     }
   }
   return wrapped();

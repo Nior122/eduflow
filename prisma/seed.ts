@@ -6,6 +6,8 @@ import { buildReportCard } from "../src/lib/exams/report-card";
 import { generateInvoices } from "../src/lib/finance/billing";
 import { recordPayment, createPaymentPlan } from "../src/lib/finance/payments";
 import { createDiscount, reviewDiscount } from "../src/lib/finance/discounts";
+import { DEFAULT_PROMPTS } from "../src/lib/ai/prompts";
+import { chunkText } from "../src/lib/ai/rag";
 
 const prisma = new PrismaClient();
 
@@ -76,6 +78,13 @@ async function main() {
     prisma.parent.deleteMany(),
     prisma.session.deleteMany(),
     prisma.account.deleteMany(),
+    prisma.aiUsageLog.deleteMany(),
+    prisma.aiConversation.deleteMany(),
+    prisma.promptTemplate.deleteMany(),
+    prisma.aiSetting.deleteMany(),
+    prisma.knowledgeBaseDocument.deleteMany(),
+    prisma.questionBank.deleteMany(),
+    prisma.generatedExam.deleteMany(),
     prisma.schoolDocument.deleteMany(),
     prisma.userPreference.deleteMany(),
     prisma.userActivityLog.deleteMany(),
@@ -891,6 +900,54 @@ async function main() {
     ],
   });
 
+
+  // ─── PHASE 7: EDUFLOW AI DEFAULTS ─────────────────────────────
+  await prisma.aiSetting.create({
+    data: {
+      schoolId: school.id,
+      provider: "openai",
+      temperature: 0.7,
+      maxTokens: 2048,
+      streamingEnabled: true,
+      fallbackProvider: true,
+      monthlyBudgetCents: 20000,
+      modulesEnabled: Object.fromEntries(Object.keys(DEFAULT_PROMPTS).map((k) => [k, true])),
+    },
+  });
+
+  await prisma.promptTemplate.createMany({
+    data: Object.entries(DEFAULT_PROMPTS).map(([key, def]) => ({
+      schoolId: school.id,
+      key,
+      name: def.name,
+      description: def.description,
+      content: def.content,
+      version: 1,
+      isActive: true,
+      isSystem: true,
+      updatedById: adminUser.id,
+    })),
+  });
+
+  const handbookText =
+    "SUNRISE INTERNATIONAL SCHOOL \u2014 STUDENT HANDBOOK (demo)\n" +
+    "1. School hours: 8:00am - 3:00pm, Monday to Friday.\n" +
+    "2. Uniform: full school uniform with ID card at all times.\n" +
+    "3. Homework is due the next school day unless stated otherwise.\n" +
+    "4. Parents should contact the class teacher for academic concerns.\n" +
+    "5. Fees are due at the start of each term.";
+  await prisma.knowledgeBaseDocument.create({
+    data: {
+      title: "Student Handbook (demo)",
+      description: "School rules and expectations \u2014 seed knowledge-base entry for RAG.",
+      sourceType: "TEXT",
+      content: handbookText,
+      chunks: chunkText(handbookText),
+      schoolId: school.id,
+      uploadedById: adminUser.id,
+    },
+  });
+
   console.log("✅ Seeding complete!");
   console.log("📧 Demo accounts:");
   console.log("   Admin:   admin@eduflow.com / password123");
@@ -900,6 +957,7 @@ async function main() {
   console.log(`📊 Phase 4: ${assessmentTypes.length} assessment types, 6 grade bands, ${publishedResults.length} published results, 5 report cards`);
   console.log(`💰 Phase 5: ${feeCategories.length} fee categories, ${openInvoices.length} invoices, 2 demo payments with receipts, 1 approved scholarship, 1 payment plan`);
   console.log(`📣 Phase 6: 2 school documents, 4 user preferences, 5 activity logs, 3 demo messages, 4 notifications`);
+  console.log(`🤖 Phase 7: AI settings row, ${Object.keys(DEFAULT_PROMPTS).length} system prompt templates, 1 knowledge-base document`);
 }
 
 /** Deterministic PRNG so the seed is reproducible. */

@@ -206,3 +206,60 @@ npm run lint
 npm run build
 npx prisma migrate deploy
 ```
+
+
+## Phase 7 — EduFlow AI: Intelligent Automation & AI Assistant
+
+EduFlow AI is a provider-agnostic AI layer covering all 12 modules. Every
+endpoint uses the production database, logs usage and respects role
+permissions. Keys live in environment variables only — nothing secret is
+stored in the database or exposed to clients.
+
+### Provider abstraction (`src/lib/ai/providers.ts`)
+OpenAI, Anthropic, Google Gemini, Groq, OpenRouter, GitHub Models and
+Cloudflare AI — selected in **Admin → AI Settings**, configuration-only
+change. Includes: streaming (SSE), tool calling, retry on 429/5xx,
+automatic fallback to the next configured provider, and a per-model cost
+table. Set at least one key in the environment (see `.env.example`).
+
+### The 12 modules
+
+| # | Module | Where |
+|---|--------|-------|
+| 1 | **AI School Assistant** — app-wide chat widget with tool calling against the real DB (poor attendance, fee debtors, failing students, today's timetable, announcements, class performance, student progress, homework stats, admin announcement creation) | floating widget on every page + `/api/ai/chat` (SSE) |
+| 2 | **AI Lesson Planner** — full lesson note with objectives, materials, activities, assessment, homework, extension activities | `/teacher/lesson-plans` → `/api/ai/lesson-plan` |
+| 3 | **AI Report Comment Generator** — personalized comments from real student data; never repeats previous comments | `/teacher/report-comments` → `/api/ai/report-comment` |
+| 4 | **AI Performance Analyzer** — real metrics + AI strengths/weak subjects/improvement plan | `/student/ai-performance`, `/parent/ai-performance` |
+| 5 | **AI Homework Assistant** — streaming tutor with hints (never just answers) | `/student/homework-assistant` |
+| 6 | **AI Question Generator** — MCQ/theory/T-F/fill-blank/matching/practical, saved to the question bank, export Word/PDF/JSON | `/teacher/ai-questions` |
+| 7 | **AI Exam Generator** — instructions, sections, marking scheme, answer key, difficulty + Bloom coverage, printable | `/teacher/ai-exams` (+ print view) |
+| 8 | **AI Student Risk Prediction** — deterministic risk score (attendance 30%, academics 40%, homework 20%, behaviour 10%) + AI interventions, saved to the student profile | `/teacher/ai-risk` |
+| 9 | **AI Parent Communication** — drafts from real data, editable, delivered via the messaging system + notification | `/teacher/ai-communication` |
+| 10 | **AI School Analytics** — subject difficulty, teacher performance, attendance & fee trends, at-risk students, class/department comparisons + executive summary | `/admin/ai-analytics` |
+| 11 | **AI Document Assistant** — PDF/Word/Excel/text upload, summarize or ask questions about the document (SSE) | `/ai-documents` |
+| 12 | **AI Knowledge Base (RAG)** — approved school documents, chunked + keyword retrieval with source citations | `/admin/ai-knowledge-base` + query endpoint |
+
+### Platform features
+- **Prompt management** — `/admin/ai-prompts`: every prompt is a DB template
+  (system defaults seeded; create/edit/version/deactivate + dry-run test).
+- **Usage & cost control** — `/admin/ai-usage`: tokens, cost (per-model
+  pricing), per module/user, monthly budget cap enforced per request.
+- **AI settings** — `/admin/ai-settings`: provider, model, temperature,
+  max tokens, streaming toggle, module on/off, fallback, budget + a
+  "test connection" button.
+- **Security** — school-scoped data, role-guarded routes, prompt
+  sanitization + injection guard, rate limiting (per-user/hour), keys in
+  env only, all requests logged (success + error).
+- **Conversation memory** — the assistant persists conversations per user
+  (history, title, continue/regenerate).
+
+### Local verification
+```bash
+npm install            # includes pdf-parse, mammoth, xlsx for document parsing
+npx prisma migrate dev --name phase7_ai   # or npm run db:push
+SEED_CONFIRM=yes npm run db:seed          # seeds AI settings + system prompts + KB demo doc
+npm run typecheck && npm run lint && npm run build
+```
+Smoke test: login → open the AI assistant (bottom-right) → ask "How many
+students owe fees?" → confirm the tool result; Teacher → AI Questions →
+generate a set; Admin → AI Settings → Test connection.
