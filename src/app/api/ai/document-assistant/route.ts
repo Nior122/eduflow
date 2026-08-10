@@ -4,39 +4,11 @@ import { validate, docAssistantSchema } from "@/lib/validations";
 import { aiStreamEvents, resolvePrompt, sseResponse, truncateText } from "@/lib/ai/core";
 import { aiGuard } from "@/lib/ai/guard";
 import { chunkText } from "@/lib/ai/rag";
-import type { KbSourceType, UserRole } from "@prisma/client";
+import { extractText } from "@/lib/ai/extract";
+import type { UserRole } from "@prisma/client";
 
 const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-
-async function extractText(file: File): Promise<{ text: string; sourceType: KbSourceType } | null> {
-  const name = file.name.toLowerCase();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  try {
-    if (name.endsWith(".pdf")) {
-      const mod = await import("pdf-parse");
-      const pdfParse = mod.default;
-      const data = await pdfParse(buffer);
-      return { text: data.text ?? "", sourceType: "PDF" };
-    }
-    if (name.endsWith(".docx")) {
-      const mammoth = await import("mammoth");
-      const data = await mammoth.extractRawText({ buffer });
-      return { text: data.value ?? "", sourceType: "WORD" };
-    }
-    if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
-      const XLSX = await import("xlsx");
-      const wb = XLSX.read(buffer, { type: "buffer" });
-      const text = wb.SheetNames.map((sn) => XLSX.utils.sheet_to_csv(wb.Sheets[sn])).join("\n");
-      return { text, sourceType: "EXCEL" };
-    }
-    const decoder = new TextDecoder("utf-8");
-    return { text: decoder.decode(buffer), sourceType: "TEXT" };
-  } catch (error) {
-    console.error("extractText failed:", error);
-    return null;
-  }
-}
 
 /**
  * POST /api/ai/document-assistant — AI Document Assistant (Module 11).
