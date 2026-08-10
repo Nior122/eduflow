@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { validate, aiChatSchema } from "@/lib/validations";
 import { chatStream, injectionGuard, resolvePrompt, sseResponse } from "@/lib/ai/core";
@@ -87,12 +88,12 @@ async function persistConversation(
     if (conversationId) {
       await prisma.aiConversation.update({
         where: { id: conversationId },
-        data: { title, messages, updatedAt: new Date() },
+        data: { title, messages: messages as unknown as Prisma.InputJsonValue, updatedAt: new Date() },
       });
       return conversationId;
     }
     const row = await prisma.aiConversation.create({
-      data: { userId, schoolId, module: "assistant", title, messages },
+      data: { userId, schoolId, module: "assistant", title, messages: messages as unknown as Prisma.InputJsonValue },
     });
     return row.id;
   } catch (error) {
