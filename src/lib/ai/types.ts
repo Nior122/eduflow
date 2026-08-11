@@ -62,5 +62,5 @@ export type AiResult = {
 export type AiStreamEvent =
   | { type: "text"; delta: string }
   | { type: "tool_call"; tool: AiToolCall }
-  | { type: "done"; usage: AiUsage }
+  | { type: "done"; usage: AiUsage; conversationId?: string | null }
   | { type: "error"; message: string };
