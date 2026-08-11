@@ -1,4 +1,4 @@
-import { authMiddleware as auth } from "@/lib/auth";
+import { authMiddleware as auth } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
 
 const ADMIN_ROLES: readonly string[] = ["SUPER_ADMIN", "SCHOOL_ADMIN"];

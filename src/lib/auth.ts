@@ -7,16 +7,10 @@ import type { UserRole } from "@prisma/client";
 import type { Session } from "next-auth";
 
 import { logActivity } from "@/lib/notifications";
+import { authConfig } from "./auth.config";
 
 const nextAuth = NextAuth({
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
+  ...authConfig,
   events: {
     async signIn({ user }) {
       if (user?.id) {
@@ -80,30 +74,6 @@ const nextAuth = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as { role?: UserRole }).role || "SCHOOL_ADMIN";
-        token.schoolId = (user as { schoolId?: string }).schoolId || null;
-        token.studentId = (user as { studentId?: string }).studentId || null;
-        token.teacherId = (user as { teacherId?: string }).teacherId || null;
-        token.parentId = (user as { parentId?: string }).parentId || null;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        (session.user as { id: string }).id = token.id as string;
-        (session.user as { role: UserRole }).role = token.role as UserRole;
-        (session.user as { schoolId: string | null }).schoolId = token.schoolId as string | null;
-        (session.user as { studentId: string | null }).studentId = token.studentId as string | null;
-        (session.user as { teacherId: string | null }).teacherId = token.teacherId as string | null;
-        (session.user as { parentId: string | null }).parentId = token.parentId as string | null;
-      }
-      return session;
-    },
-  },
 });
 
 export const { handlers, signIn, signOut } = nextAuth;
