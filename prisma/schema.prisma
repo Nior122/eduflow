@@ -166,6 +166,7 @@ model User {
   promptEdits            PromptTemplate[]       @relation("PromptEditor")
   questionBank           QuestionBank[]         @relation("QuestionAuthor")
   examsGenerated         GeneratedExam[]        @relation("ExamAuthor")
+  libraryAuditLogs       LibraryAuditLog[]
 
   @@index([email])
   @@index([role])
@@ -268,6 +269,17 @@ model School {
   discounts         Discount[]
   paymentGatewayConfigs PaymentGatewayConfig[]
   numberSequences   NumberSequence[]
+  libraryCategories   LibraryCategory[]
+  libraryAuthors      LibraryAuthor[]
+  libraryPublishers   LibraryPublisher[]
+  libraryBooks        LibraryBook[]
+  libraryCopies       LibraryCopy[]
+  libraryBorrows      LibraryBorrow[]
+  libraryReservations LibraryReservation[]
+  libraryReadingHistory LibraryReadingHistory[]
+  libraryFines        LibraryFine[]
+  librarySettings     LibrarySettings?
+  libraryAuditLogs    LibraryAuditLog[]
 
   @@index([slug])
 }
@@ -333,6 +345,10 @@ model Student {
   discounts     Discount[]
   paymentPlans  PaymentPlan[]
   latePayments  LatePayment[]
+  libraryBorrows      LibraryBorrow[]
+  libraryReservations LibraryReservation[]
+  libraryReadingHistory LibraryReadingHistory[]
+  libraryFines        LibraryFine[]
 
   @@index([admissionNumber])
   @@index([schoolId])
@@ -1878,4 +1894,297 @@ model PaymentGatewayConfig {
   school   School @relation(fields: [schoolId], references: [id])
 
   @@unique([schoolId, gateway])
+}
+
+// ─── PHASE 8: LIBRARY MANAGEMENT ────────────────────────────────────
+
+enum LibraryItemType {
+  BOOK
+  E_BOOK
+  MAGAZINE
+  PAST_QUESTION
+  DIGITAL_RESOURCE
+}
+
+enum LibraryCopyCondition {
+  NEW
+  GOOD
+  FAIR
+  DAMAGED
+  LOST
+}
+
+enum LibraryCopyStatus {
+  AVAILABLE
+  BORROWED
+  RESERVED
+  MAINTENANCE
+  LOST
+}
+
+enum LibraryBorrowStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
+  LOST
+}
+
+enum LibraryReservationStatus {
+  PENDING
+  READY
+  CANCELLED
+  FULFILLED
+  EXPIRED
+}
+
+enum LibraryFineStatus {
+  PENDING
+  PAID
+  WAIVED
+}
+
+model LibraryCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  books LibraryBook[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, isActive])
+}
+
+model LibraryAuthor {
+  id          String   @id @default(cuid())
+  name        String
+  bio         String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  books LibraryBook[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, isActive])
+}
+
+model LibraryPublisher {
+  id          String   @id @default(cuid())
+  name        String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  books LibraryBook[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, isActive])
+}
+
+model LibraryBook {
+  id              String          @id @default(cuid())
+  title           String
+  subtitle        String?
+  isbn            String?
+  type            LibraryItemType @default(BOOK)
+  language        String?
+  description     String?         @db.Text
+  coverUrl        String?
+  fileUrl         String?
+  pages           Int?
+  shelfLocation   String?
+  barcode         String?
+  qrData          String?
+  publicationYear Int?
+  totalCopies     Int             @default(1)
+  availableCopies Int             @default(1)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  schoolId    String
+  school      School           @relation(fields: [schoolId], references: [id])
+  categoryId  String?
+  category    LibraryCategory? @relation(fields: [categoryId], references: [id])
+  authorId    String?
+  author      LibraryAuthor?   @relation(fields: [authorId], references: [id])
+  publisherId String?
+  publisher   LibraryPublisher? @relation(fields: [publisherId], references: [id])
+
+  copies         LibraryCopy[]
+  borrows        LibraryBorrow[]
+  reservations   LibraryReservation[]
+  readingHistory LibraryReadingHistory[]
+
+  @@index([schoolId])
+  @@index([schoolId, isActive])
+  @@index([schoolId, type])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([publisherId])
+  @@index([isbn])
+}
+
+model LibraryCopy {
+  id         String               @id @default(cuid())
+  copyNumber Int
+  barcode    String?
+  condition  LibraryCopyCondition @default(GOOD)
+  status     LibraryCopyStatus    @default(AVAILABLE)
+  acquiredAt DateTime?
+  isActive   Boolean              @default(true)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  schoolId String
+  school   School      @relation(fields: [schoolId], references: [id])
+  bookId   String
+  book     LibraryBook @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  borrows LibraryBorrow[]
+
+  @@unique([bookId, copyNumber])
+  @@index([schoolId, status])
+  @@index([schoolId, isActive])
+  @@index([bookId])
+  @@index([barcode])
+}
+
+model LibraryBorrow {
+  id                 String               @id @default(cuid())
+  borrowedAt         DateTime             @default(now())
+  dueDate            DateTime
+  returnedAt         DateTime?
+  status             LibraryBorrowStatus  @default(BORROWED)
+  note               String?
+  returnedCondition  LibraryCopyCondition?
+  lateFeeAmount      Decimal?             @db.Decimal(10, 2)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  schoolId  String
+  school    School       @relation(fields: [schoolId], references: [id])
+  copyId    String
+  copy      LibraryCopy  @relation(fields: [copyId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      LibraryBook  @relation(fields: [bookId], references: [id])
+  studentId String
+  student   Student      @relation(fields: [studentId], references: [id])
+
+  fine LibraryFine?
+
+  @@index([schoolId, status])
+  @@index([studentId, status])
+  @@index([copyId, status])
+  @@index([bookId])
+  @@index([dueDate])
+}
+
+model LibraryReservation {
+  id         String                    @id @default(cuid())
+  reservedAt DateTime                  @default(now())
+  expiresAt  DateTime
+  status     LibraryReservationStatus  @default(PENDING)
+  notified   Boolean                   @default(false)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+
+  schoolId  String
+  school    School       @relation(fields: [schoolId], references: [id])
+  bookId    String
+  book      LibraryBook  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student      @relation(fields: [studentId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([bookId, status])
+  @@index([studentId, status])
+  @@index([expiresAt])
+}
+
+model LibraryReadingHistory {
+  id         String   @id @default(cuid())
+  openedAt   DateTime @default(now())
+  finishedAt DateTime?
+  progress   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schoolId  String
+  school    School       @relation(fields: [schoolId], references: [id])
+  bookId    String
+  book      LibraryBook  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student      @relation(fields: [studentId], references: [id])
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([bookId])
+}
+
+model LibraryFine {
+  id        String            @id @default(cuid())
+  amount    Decimal           @db.Decimal(10, 2)
+  reason    String?
+  status    LibraryFineStatus @default(PENDING)
+  paidAt    DateTime?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  schoolId  String
+  school    School        @relation(fields: [schoolId], references: [id])
+  borrowId  String        @unique
+  borrow    LibraryBorrow @relation(fields: [borrowId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student       @relation(fields: [studentId], references: [id])
+
+  @@index([schoolId, status])
+  @@index([studentId, status])
+  @@index([status])
+}
+
+model LibrarySettings {
+  id               String   @id @default(cuid())
+  lateFeePerDay    Decimal  @db.Decimal(10, 2) @default(50)
+  maxBorrowDays    Int      @default(14)
+  maxActiveBorrows Int      @default(5)
+  borrowEnabled    Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  schoolId String @unique
+  school   School @relation(fields: [schoolId], references: [id])
+}
+
+model LibraryAuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+  actorId  String?
+  actor    User?   @relation(fields: [actorId], references: [id])
+
+  @@index([schoolId, entity, entityId])
+  @@index([schoolId, action])
+  @@index([createdAt])
+  @@index([actorId])
 }
