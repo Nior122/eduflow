@@ -13,6 +13,10 @@ import type { Session } from "next-auth";
 import type { UserRole } from "@prisma/client";
 
 export const authConfig = {
+  // Required by the NextAuthConfig type. The real providers (Credentials)
+  // are added in ./auth, which extends this config — this edge-safe
+  // instance is only used by the middleware and never signs users in.
+  providers: [],
   pages: {
     signIn: "/login",
     error: "/login",
