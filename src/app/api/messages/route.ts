@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, messageSendSchema } from "@/lib/validations";
 import { logActivity, notifyUser } from "@/lib/notifications";
 import { MESSAGE_ROLES, pairKey } from "@/lib/messages";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 
 type ConvItem = {
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
           subject: data.subject,
           content: data.content,
           receiverId: data.receiverId ?? draft.receiverId,
-          attachments: attachments ?? draft.attachments,
+          attachments: attachments ?? draft.attachments ?? Prisma.DbNull,
         },
       });
       await logActivity({
