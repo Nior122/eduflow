@@ -24,7 +24,7 @@ export async function getScopedStudent(opts: {
   parentId?: string | null;
   studentOwnId?: string | null;
 }) {
-  const base = { schoolId, isActive: true as const };
+  const base = { schoolId: opts.schoolId, isActive: true as const };
   if (opts.role === "STUDENT") {
     if (opts.studentOwnId !== opts.studentId) return null;
     return prisma.student.findFirst({ where: { ...base, id: opts.studentId }, include: { class: { select: { id: true, name: true } } } });
