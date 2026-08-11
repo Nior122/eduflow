@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validate, docAssistantSchema } from "@/lib/validations";
 import { aiStreamEvents, resolvePrompt, sseResponse } from "@/lib/ai/core";
+import type { AiStreamEvent } from "@/lib/ai/types";
 import { truncateText } from "@/lib/ai/providers";
 import { aiGuard } from "@/lib/ai/guard";
 import { chunkText } from "@/lib/ai/rag";
@@ -104,11 +105,11 @@ export async function POST(req: Request) {
 }
 
 async function* attachMeta(
-  gen: AsyncGenerator<{ type: string; delta?: string; message?: string; usage?: unknown }>,
+  gen: AsyncGenerator<AiStreamEvent>,
   documentId: string
-): AsyncGenerator<{ type: string; delta?: string; message?: string; usage?: unknown }> {
-  yield { type: "meta", documentId } as never;
-  yield* gen as AsyncGenerator<{ type: string; delta?: string; message?: string; usage?: unknown }>;
+): AsyncGenerator<AiStreamEvent> {
+  yield { type: "meta", documentId };
+  yield* gen;
 }
 
 /** GET /api/ai/documents — knowledge-base document list (staff). */

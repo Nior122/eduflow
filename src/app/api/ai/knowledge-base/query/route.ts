@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validate, kbQuerySchema } from "@/lib/validations";
 import { aiStreamEvents, resolvePrompt, sseResponse } from "@/lib/ai/core";
+import type { AiStreamEvent } from "@/lib/ai/types";
 import { aiGuard } from "@/lib/ai/guard";
 import { mergePassages, scoreChunks } from "@/lib/ai/rag";
 import type { UserRole } from "@prisma/client";
@@ -60,18 +61,18 @@ export async function POST(req: Request) {
   return sseResponse(withSources(gen, passages.map((p) => p.source)));
 }
 
-async function* noSources(question: string): AsyncGenerator<{ type: string; delta?: string; usage?: unknown }> {
+async function* noSources(question: string): AsyncGenerator<AiStreamEvent> {
   yield {
     type: "text",
     delta: `I couldn't find anything about "${question.slice(0, 80)}" in the school's approved knowledge base yet. An administrator can add relevant documents (handbooks, policies, past questions…) under **AI → Knowledge Base**.`,
-  } as never;
-  yield { type: "done", usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } } as never;
+  };
+  yield { type: "done", usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
 async function* withSources(
-  gen: AsyncGenerator<{ type: string; delta?: string; usage?: unknown }>,
+  gen: AsyncGenerator<AiStreamEvent>,
   sources: string[]
-): AsyncGenerator<{ type: string; delta?: string; usage?: unknown }> {
-  yield { type: "sources", sources } as never;
+): AsyncGenerator<AiStreamEvent> {
+  yield { type: "sources", sources };
   yield* gen;
 }
