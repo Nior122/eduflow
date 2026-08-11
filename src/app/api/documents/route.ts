@@ -40,7 +40,7 @@ export async function GET(req: Request) {
       ...(category ? { category: category as DocumentCategory } : {}),
       ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {}),
     },
-    include: { uploader: { select: { name: true } } },
+    include: { uploader: { select: { id: true, name: true } } },
     orderBy: { createdAt: "desc" },
     take: limit,
   });

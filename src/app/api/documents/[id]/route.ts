@@ -30,7 +30,7 @@ export async function GET(_req: Request, { params }: RouteCtx) {
   const { id } = await params;
   const doc = await prisma.schoolDocument.findFirst({
     where: { id, schoolId, isActive: true },
-    include: { uploader: { select: { name: true } } },
+    include: { uploader: { select: { id: true, name: true } } },
   });
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
