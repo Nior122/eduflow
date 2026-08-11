@@ -862,3 +862,83 @@ export const promptTemplateUpdateSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   content: z.string().min(10).optional(),
 });
+
+// ─── PHASE 8: LIBRARY ───────────────────────────────────────────────
+
+export const libraryItemTypes = [
+  "BOOK", "E_BOOK", "MAGAZINE", "PAST_QUESTION", "DIGITAL_RESOURCE",
+] as const;
+
+export const libraryCopyConditions = ["NEW", "GOOD", "FAIR", "DAMAGED", "LOST"] as const;
+
+export const libraryBookSchema = z.object({
+  title: z.string().min(1, "Title is required").max(300),
+  subtitle: z.string().max(300).nullable().optional(),
+  isbn: z.string().max(30).nullable().optional(),
+  type: z.enum(libraryItemTypes).default("BOOK"),
+  language: z.string().max(60).nullable().optional(),
+  description: z.string().max(5000).nullable().optional(),
+  coverUrl: z.string().max(500).nullable().optional(),
+  fileUrl: z.string().max(500).nullable().optional(),
+  pages: z.coerce.number().int().min(1).max(100000).nullable().optional(),
+  shelfLocation: z.string().max(120).nullable().optional(),
+  barcode: z.string().max(120).nullable().optional(),
+  qrData: z.string().max(500).nullable().optional(),
+  publicationYear: z.coerce.number().int().min(1000).max(3000).nullable().optional(),
+  totalCopies: z.coerce.number().int().min(1).max(500).default(1),
+  categoryId: z.string().min(1).nullable().optional(),
+  authorId: z.string().min(1).nullable().optional(),
+  publisherId: z.string().min(1).nullable().optional(),
+  copyBarcodes: z.array(z.string().max(120)).max(500).optional(),
+});
+
+export const libraryBookUpdateSchema = libraryBookSchema.partial();
+
+export const libraryCategorySchema = z.object({
+  name: z.string().min(1, "Name is required").max(120),
+  description: z.string().max(500).nullable().optional(),
+});
+
+export const libraryBorrowSchema = z
+  .object({
+    studentId: z.string().min(1, "Student is required"),
+    copyId: z.string().optional(),
+    bookId: z.string().optional(),
+    dueDate: z.string().optional(),
+    note: z.string().max(500).nullable().optional(),
+  })
+  .refine((v) => v.copyId || v.bookId, { message: "Provide a copy or a book" });
+
+export const libraryReturnSchema = z.object({
+  returnedCondition: z.enum(libraryCopyConditions).optional(),
+  note: z.string().max(500).nullable().optional(),
+});
+
+export const libraryReservationSchema = z.object({
+  bookId: z.string().min(1, "Book is required"),
+  studentId: z.string().min(1, "Student is required"),
+});
+
+export const librarySettingsSchema = z.object({
+  lateFeePerDay: z.coerce.number().min(0).max(100000).optional(),
+  maxBorrowDays: z.coerce.number().int().min(1).max(365).optional(),
+  maxActiveBorrows: z.coerce.number().int().min(1).max(100).optional(),
+  borrowEnabled: z.boolean().optional(),
+});
+
+export const libraryBookQuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  categoryId: z.string().optional(),
+  type: z.enum(libraryItemTypes).optional(),
+  available: z.enum(["true", "false"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const libraryBorrowQuerySchema = z.object({
+  status: z.enum(["BORROWED", "RETURNED", "OVERDUE", "LOST"]).optional(),
+  studentId: z.string().optional(),
+  overdue: z.enum(["true", "false"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
