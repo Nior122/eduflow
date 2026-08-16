@@ -2525,6 +2525,8 @@ model WebhookEndpoint {
   schoolId String
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
+  deliveries WebhookEventLog[]
+
   @@index([schoolId])
 }
 
