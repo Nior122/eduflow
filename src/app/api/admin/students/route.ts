@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { validate, studentSchema } from "@/lib/validations";
 import { provisionUser, generateAdmissionNumber } from "@/lib/provision";
 import { Prisma } from "@prisma/client";
+import { checkUsageLimit, recordUsage } from "@/lib/saas/usage";
+import { queueWebhookEvent } from "@/lib/saas/webhooks";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 
@@ -74,6 +76,15 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
+    // Phase 9: plan limit check — students are metered per school per month.
+    const studentLimit = await checkUsageLimit(schoolId, "STUDENTS", "maxStudents");
+    if (studentLimit !== null) {
+      return NextResponse.json(
+        { error: `Student limit reached (${studentLimit}). Upgrade your subscription to add more students.` },
+        { status: 403 }
+      );
+    }
+
     // Student + login account + timeline entry in one transaction.
     const { student, creds } = await prisma.$transaction(async (tx) => {
       const creds = await provisionUser(
@@ -118,6 +129,13 @@ export async function POST(req: Request) {
         data: { studentId: student.id, event: "Admitted", note: "Student registered" },
       });
       return { student, creds };
+    });
+
+    await recordUsage(schoolId, "STUDENTS", 1);
+    await queueWebhookEvent({
+      schoolId,
+      event: "student.created",
+      payload: { student: { id: student.id, name: `${student.firstName} ${student.lastName}`, admissionNumber: student.admissionNumber } },
     });
 
     return NextResponse.json(

@@ -948,12 +948,47 @@ async function main() {
     },
   });
 
+  // ─── Phase 9: SaaS platform records ─────────────────────────────
+  const planData = [
+    { name: "Starter", code: "STARTER", sortOrder: 1, description: "For small schools getting started.", priceMonthly: 2900, priceYearly: 29000, features: { maxStudents: 100, maxTeachers: 10, storageMb: 1024, aiTokensPerMonth: 100000, apiCallsPerMonth: 10000, modules: { LIBRARY: false, TRANSPORT: false, PAYROLL: false, AI: true, HOSTEL: false, CLINIC: false, INVENTORY: false, CERTIFICATES: true, MESSAGING: true, REPORTS: true, BILLING: true } } },
+    { name: "Professional", code: "PROFESSIONAL", sortOrder: 2, description: "For growing schools that need more.", priceMonthly: 7900, priceYearly: 79000, features: { maxStudents: 500, maxTeachers: 50, storageMb: 5120, aiTokensPerMonth: 500000, apiCallsPerMonth: 50000, modules: { LIBRARY: true, TRANSPORT: true, PAYROLL: false, AI: true, HOSTEL: false, CLINIC: false, INVENTORY: false, CERTIFICATES: true, MESSAGING: true, REPORTS: true, BILLING: true } } },
+    { name: "Business", code: "BUSINESS", sortOrder: 3, description: "For large schools with full modules.", priceMonthly: 19900, priceYearly: 199000, features: { maxStudents: 2000, maxTeachers: 200, storageMb: 20480, aiTokensPerMonth: 2000000, apiCallsPerMonth: 200000, modules: { LIBRARY: true, TRANSPORT: true, PAYROLL: true, AI: true, HOSTEL: true, CLINIC: true, INVENTORY: true, CERTIFICATES: true, MESSAGING: true, REPORTS: true, BILLING: true } } },
+    { name: "Enterprise", code: "ENTERPRISE", sortOrder: 4, description: "Unlimited everything, custom support.", priceMonthly: 49900, priceYearly: 499000, features: { maxStudents: 100000, maxTeachers: 10000, storageMb: 102400, aiTokensPerMonth: 10000000, apiCallsPerMonth: 1000000, modules: { LIBRARY: true, TRANSPORT: true, PAYROLL: true, AI: true, HOSTEL: true, CLINIC: true, INVENTORY: true, CERTIFICATES: true, MESSAGING: true, REPORTS: true, BILLING: true } } },
+  ];
+  const planRows = await Promise.all(
+    planData.map((p) => prisma.subscriptionPlan.create({ data: { ...p, currency: "USD" } }))
+  );
+  const plansById = Object.fromEntries(planRows.map((p) => [p.code, p])) as Record<string, { id: string }>;
+  await prisma.platformSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: { id: 1, defaultTrialDays: 14, defaultPlanCode: "STARTER", currency: "USD", supportEmail: "support@eduflow.app" },
+  });
+  await prisma.subscription.create({
+    data: {
+      schoolId: school.id, planId: plansById.STARTER!.id, status: "ACTIVE", cycle: "MONTHLY",
+      currentPeriodStart: new Date(), currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      billingEmail: "admin@eduflow.com", amountMinor: 2900, currency: "USD",
+    },
+  });
+  await prisma.schoolOnboarding.create({
+    data: {
+      schoolId: school.id, currentStep: 7,
+      steps: { "1": { done: true }, "2": { done: true }, "3": { done: true }, "4": { done: true }, "5": { done: true }, "6": { done: true } },
+      isComplete: true, completedAt: new Date(),
+    },
+  });
+  await prisma.user.create({
+    data: { name: "Platform Owner", email: "superadmin@eduflow.app", passwordHash, role: "SUPER_ADMIN" },
+  });
+
   console.log("✅ Seeding complete!");
   console.log("📧 Demo accounts:");
   console.log("   Admin:   admin@eduflow.com / password123");
   console.log("   Teacher: teacher@eduflow.com / password123");
   console.log("   Parent:  parent@eduflow.com / password123");
   console.log("   Student: student@eduflow.com / password123");
+  console.log("   Super Admin: superadmin@eduflow.app / password123");
   console.log(`📊 Phase 4: ${assessmentTypes.length} assessment types, 6 grade bands, ${publishedResults.length} published results, 5 report cards`);
   console.log(`💰 Phase 5: ${feeCategories.length} fee categories, ${openInvoices.length} invoices, 2 demo payments with receipts, 1 approved scholarship, 1 payment plan`);
   console.log(`📣 Phase 6: 2 school documents, 4 user preferences, 5 activity logs, 3 demo messages, 4 notifications`);

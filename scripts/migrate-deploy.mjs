@@ -10,6 +10,11 @@
  */
 import { execSync } from "node:child_process";
 
+if (process.env.SKIP_MIGRATE === "1") {
+  console.log("migrate-deploy: SKIP_MIGRATE=1 — skipping migrations (CI/build without DB).");
+  process.exit(0);
+}
+
 const explicit = process.env.DIRECT_URL;
 const databaseUrl = process.env.DATABASE_URL ?? "";
 const isPooled = databaseUrl.includes("-pooler.");

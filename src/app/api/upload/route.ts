@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { saveUpload } from "@/lib/uploads";
+import { prisma } from "@/lib/db";
 import { logActivity } from "@/lib/notifications";
+import { getUsage, recordUsage } from "@/lib/saas/usage";
+import { parsePlanFeatures } from "@/lib/saas/plans";
 
 /**
  * POST /api/upload — generic authenticated file upload (attachments,
@@ -36,7 +39,23 @@ export async function POST(req: Request) {
       : "misc";
 
   try {
+    // Phase 9: storage quota (plan limit in MB, metered in KB).
+    const school = await prisma.school.findUnique({
+      where: { id: session.user.schoolId },
+      select: { subscription: { select: { plan: { select: { features: true } } } } },
+    });
+    const planFeatures = parsePlanFeatures(school?.subscription?.plan?.features);
+    const usedKb = await getUsage(session.user.schoolId, "STORAGE_KB");
+    const incomingKb = Math.ceil(file.size / 1024);
+    if (usedKb + incomingKb > planFeatures.storageMb * 1024) {
+      return NextResponse.json(
+        { error: `Storage quota reached (${planFeatures.storageMb} MB). Upgrade your subscription for more storage.` },
+        { status: 403 }
+      );
+    }
+
     const saved = await saveUpload(file, { folder });
+    await recordUsage(session.user.schoolId, "STORAGE_KB", incomingKb);
     await logActivity({
       userId: session.user.id,
       schoolId: session.user.schoolId,

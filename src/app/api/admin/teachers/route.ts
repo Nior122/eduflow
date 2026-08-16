@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, teacherSchema } from "@/lib/validations";
+import { checkUsageLimit, recordUsage } from "@/lib/saas/usage";
+import { queueWebhookEvent } from "@/lib/saas/webhooks";
 import { provisionUser } from "@/lib/provision";
 import { Prisma } from "@prisma/client";
 
@@ -44,6 +46,15 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
 
+    // Phase 9: plan limit check — teachers are metered per school per month.
+    const teacherLimit = await checkUsageLimit(schoolId, "TEACHERS", "maxTeachers");
+    if (teacherLimit !== null) {
+      return NextResponse.json(
+        { error: `Teacher limit reached (${teacherLimit}). Upgrade your subscription to add more teachers.` },
+        { status: 403 }
+      );
+    }
+
     if (data.departmentId) {
       const dept = await prisma.department.findFirst({
         where: { id: data.departmentId, schoolId, isActive: true },
@@ -83,6 +94,13 @@ export async function POST(req: Request) {
         },
       });
       return { teacher, creds };
+    });
+
+    await recordUsage(schoolId, "TEACHERS", 1);
+    await queueWebhookEvent({
+      schoolId,
+      event: "teacher.created",
+      payload: { teacher: { id: teacher.id, name: `${teacher.firstName} ${teacher.lastName}`, email: teacher.email } },
     });
 
     return NextResponse.json(

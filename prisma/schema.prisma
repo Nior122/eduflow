@@ -169,6 +169,12 @@ model User {
   examsGenerated         GeneratedExam[]        @relation("ExamAuthor")
   libraryAuditLogs       LibraryAuditLog[]
 
+  supportTicketsCreated  SupportTicket[] @relation("TicketCreatedBy")
+  supportTicketsAssigned SupportTicket[] @relation("TicketAssignedTo")
+  couponsCreated         Coupon[]        @relation("CouponCreatedBy")
+  auditEntries           AuditLog[]      @relation("AuditActor")
+  backupJobsCreated      BackupJob[]     @relation("BackupCreatedBy")
+
   @@index([email])
   @@index([role])
   @@index([schoolId])
@@ -232,6 +238,9 @@ model School {
   gradeSystem    String?   @db.Text
   attendanceRules String?  @db.Text
   category  ClassCategory @default(PRIMARY)
+  status            String           @default("ACTIVE") // ACTIVE | SUSPENDED — super admin control
+  onboardingStep    Int              @default(0)
+  onboardingComplete Boolean         @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -281,6 +290,17 @@ model School {
   libraryFines        LibraryFine[]
   librarySettings     LibrarySettings?
   libraryAuditLogs    LibraryAuditLog[]
+
+  subscription       Subscription?
+  onboarding         SchoolOnboarding?
+  featureFlags       FeatureFlag[]
+  usageRecords       UsageRecord[]
+  auditLogs          AuditLog[]
+  billingInvoices    BillingInvoice[]
+  apiKeys            ApiKey[]
+  webhookEndpoints   WebhookEndpoint[]
+  webhookEventLogs   WebhookEventLog[]
+  supportTickets     SupportTicket[]
 
   @@index([slug])
 }
@@ -2188,4 +2208,311 @@ model LibraryAuditLog {
   @@index([schoolId, action])
   @@index([createdAt])
   @@index([actorId])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PHASE 9 — MULTI-TENANT SAAS LAYER
+// ═══════════════════════════════════════════════════════════════════
+
+enum SubscriptionStatus { TRIALING ACTIVE PAST_DUE CANCELED EXPIRED }
+enum SubscriptionCycle { MONTHLY YEARLY }
+enum BillingProvider { STRIPE PAYSTACK FLUTTERWAVE }
+enum BillingInvoiceStatus { DRAFT OPEN PAID OVERDUE VOID FAILED }
+enum CouponDiscountType { PERCENT FIXED }
+enum SupportTicketStatus { OPEN PENDING RESOLVED CLOSED }
+enum SupportTicketPriority { LOW MEDIUM HIGH URGENT }
+enum UsageMetric { STUDENTS TEACHERS API_CALLS AI_TOKENS STORAGE_KB LOGINS }
+enum FeatureModule { LIBRARY TRANSPORT PAYROLL AI HOSTEL CLINIC INVENTORY CERTIFICATES MESSAGING REPORTS BILLING }
+enum BackupJobStatus { PENDING RUNNING COMPLETED FAILED }
+enum EmailLogStatus { QUEUED SENT FAILED }
+enum WebhookEventStatus { PENDING DELIVERED FAILED }
+
+/// Platform-level SaaS plan (Starter / Professional / Business / Enterprise).
+model SubscriptionPlan {
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  description  String?
+  priceMonthly Int      @default(0) // minor units (cents/kobo)
+  priceYearly  Int      @default(0)
+  currency     String   @default("USD")
+  features     Json // { maxStudents, maxTeachers, storageMb, aiTokensPerMonth, apiCallsPerMonth, modules: { FeatureModule: boolean } }
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([isActive])
+}
+
+/// A school's SaaS subscription (one per school).
+model Subscription {
+  id                     String             @id @default(cuid())
+  status                 SubscriptionStatus @default(TRIALING)
+  cycle                  SubscriptionCycle  @default(MONTHLY)
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  trialEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  provider               BillingProvider?
+  providerSubscriptionId String?
+  providerCustomerId     String?
+  billingEmail           String?
+  nextPaymentDate        DateTime?
+  amountMinor            Int                @default(0)
+  currency               String             @default("USD")
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  schoolId String
+  school   School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  planId   String
+  plan     SubscriptionPlan  @relation(fields: [planId], references: [id])
+
+  invoices BillingInvoice[]
+
+  @@unique([schoolId])
+  @@index([status])
+  @@index([planId])
+  @@index([providerSubscriptionId])
+}
+
+/// Platform invoice for a school subscription (distinct from school fee Invoice).
+model BillingInvoice {
+  id                 String               @id @default(cuid())
+  number             String               @unique
+  status             BillingInvoiceStatus @default(OPEN)
+  amountMinor        Int                  @default(0)
+  discountMinor      Int                  @default(0)
+  currency           String               @default("USD")
+  provider           BillingProvider?
+  providerInvoiceId  String?
+  couponCode         String?
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  dueDate            DateTime?
+  paidAt             DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  schoolId       String
+  school         School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([status])
+  @@index([providerInvoiceId])
+}
+
+/// Discount codes applied at checkout (platform-wide, created by super admin).
+model Coupon {
+  id              String             @id @default(cuid())
+  code            String             @unique
+  description     String?
+  discountType    CouponDiscountType @default(PERCENT)
+  discountValue   Int                @default(0) // percent (1-100) or fixed minor units
+  currency        String? // required when discountType = FIXED
+  maxRedemptions  Int?
+  redemptionCount Int                @default(0)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  createdById     String?
+  createdBy       User?              @relation("CouponCreatedBy", fields: [createdById], references: [id])
+
+  @@index([isActive])
+}
+
+/// Per-school override of plan module access (defaults come from the plan).
+model FeatureFlag {
+  id        String        @id @default(cuid())
+  module    FeatureModule
+  enabled   Boolean       @default(true)
+  updatedAt DateTime      @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, module])
+}
+
+/// Aggregated usage counters, one row per school/metric/month.
+model UsageRecord {
+  id        String      @id @default(cuid())
+  metric    UsageMetric
+  period    String // YYYY-MM (UTC)
+  value     Int         @default(0)
+  updatedAt DateTime    @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, metric, period])
+  @@index([schoolId, metric])
+}
+
+/// Platform audit trail (auth/security/billing events across tenants).
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  category   String // AUTH | BILLING | TENANT | SECURITY | ADMIN | ONBOARDING | API
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
+  actorId  String?
+  actor    User?   @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([category, createdAt])
+}
+
+/// Super-admin support tickets (schools open, platform answers).
+model SupportTicket {
+  id          String                @id @default(cuid())
+  subject     String
+  description String                @db.Text
+  status      SupportTicketStatus   @default(OPEN)
+  priority    SupportTicketPriority @default(MEDIUM)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  schoolId     String?
+  school       School? @relation(fields: [schoolId], references: [id])
+  createdById  String?
+  createdBy    User?   @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  assignedToId String?
+  assignedTo   User?   @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
+
+  @@index([status])
+  @@index([schoolId, createdAt])
+}
+
+/// Singleton platform configuration (id = 1).
+model PlatformSettings {
+  id                Int      @id @default(1)
+  allowRegistration Boolean  @default(true)
+  defaultTrialDays  Int      @default(14)
+  defaultPlanCode   String   @default("STARTER")
+  maintenanceMode   Boolean  @default(false)
+  maintenanceMessage String?
+  currency          String   @default("USD")
+  supportEmail      String?
+  announcements     Json?
+  updatedAt         DateTime @updatedAt
+}
+
+/// Onboarding progress for a school (steps stored as a Json map).
+model SchoolOnboarding {
+  id          String   @id @default(cuid())
+  currentStep Int      @default(1)
+  steps       Json // { "1": { done: true, data: {...} }, ... }
+  isComplete  Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId])
+}
+
+/// API keys for the versioned REST API (/api/v1). Only the SHA-256 hash is stored.
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  prefix     String // first 8 chars, shown in the UI
+  keyHash    String    @unique // sha256(key)
+  scopes     String[]
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+}
+
+/// Outbound webhook endpoint (event notifications).
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  url       String
+  secret    String? // HMAC signing secret for deliveries
+  events    String[] // e.g. ["student.created", "payment.received"]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+}
+
+/// Delivery attempt log for outbound webhooks (retried by the daily cron).
+model WebhookEventLog {
+  id             String             @id @default(cuid())
+  event          String
+  payload        Json
+  status         WebhookEventStatus @default(PENDING)
+  attempts       Int                @default(0)
+  responseStatus Int?
+  nextAttemptAt  DateTime?
+  createdAt      DateTime           @default(now())
+  deliveredAt    DateTime?
+
+  schoolId   String?
+  school     School?         @relation(fields: [schoolId], references: [id])
+  endpointId String?
+  endpoint   WebhookEndpoint? @relation(fields: [endpointId], references: [id])
+
+  @@index([status, nextAttemptAt])
+  @@index([schoolId, createdAt])
+}
+
+/// Database backup job record (actual dump runs in scripts/backup.ts).
+model BackupJob {
+  id          String           @id @default(cuid())
+  kind        String           @default("MANUAL") // MANUAL | SCHEDULED
+  status      BackupJobStatus  @default(PENDING)
+  url         String?
+  sizeBytes   Int?
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  createdAt   DateTime         @default(now())
+
+  createdById String?
+  createdBy   User? @relation("BackupCreatedBy", fields: [createdById], references: [id])
+
+  @@index([status, createdAt])
+}
+
+/// Outbound transactional email log.
+model EmailLog {
+  id        String         @id @default(cuid())
+  to        String
+  subject   String
+  template  String?
+  status    EmailLogStatus @default(QUEUED)
+  provider  String?
+  error     String?
+  createdAt DateTime       @default(now())
+
+  @@index([status, createdAt])
+  @@index([to, createdAt])
 }

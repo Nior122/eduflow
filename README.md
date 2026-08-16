@@ -263,3 +263,58 @@ npm run typecheck && npm run lint && npm run build
 Smoke test: login → open the AI assistant (bottom-right) → ask "How many
 students owe fees?" → confirm the tool result; Teacher → AI Questions →
 generate a set; Admin → AI Settings → Test connection.
+
+
+---
+
+## Phase 9 — Multi-Tenant SaaS Platform
+
+EduFlow is now a commercial multi-tenant SaaS:
+
+- **Tenant isolation** — every school is a tenant; all queries are school-scoped
+  (`src/lib/saas/tenant.ts`, `apiGuard`), and the middleware injects an
+  `x-tenant-id` header derived from the session. The isolation test suite is in
+  `scripts/verify-tenant-isolation.sh` (run it against a live instance).
+- **School onboarding** — registration creates a school + trial subscription;
+  a 6-step wizard (`/onboarding`) walks admins through setup.
+- **Subscriptions & billing** — 4 plans (Starter/Professional/Business/
+  Enterprise) with per-plan limits (students, teachers, storage, AI tokens,
+  API calls) and module licensing. Provider abstraction supports **Stripe,
+  Paystack and Flutterwave** (fetch-based REST, no SDKs) with verified
+  webhooks, invoices, coupons, trials, proration notes and payment-failure
+  alerts. See `docs/BILLING.md`.
+- **Feature flags** — plan defaults + per-school overrides
+  (`Admin → Features`); enforcement in `apiGuard({ feature })`.
+- **Usage metering** — `UsageRecord` counters per school/month; student and
+  teacher creation is plan-limited; uploads are storage-quota-limited.
+- **Super admin portal** — `/superadmin`: platform KPIs, school management
+  (suspend/activate, plan changes), plans, coupons, support tickets, audit
+  log, backups, platform settings (maintenance mode, registration pause).
+- **API v1** — versioned REST API (`/api/v1/*`) with API-key auth
+  (`Admin → API Keys`), rate limiting, pagination/filtering/sorting, an
+  OpenAPI spec at `/api/v1/openapi.json`, and signed outbound webhooks
+  (`Admin → Webhooks`) with retry.
+- **Ops** — `/api/health` + `/api/health/ready`, daily cron
+  (`/api/cron/daily`, Vercel cron), structured JSON logging, audit trail,
+  backup jobs (`scripts/backup.ts` + restore), GitHub Actions CI, security
+  headers + CSP, rate-limited login.
+
+### Phase 9 setup (after `npm install`)
+
+```bash
+cp .env.example .env.local     # add CRON_SECRET + billing/storage keys
+npm run db:push                # or: npx prisma migrate dev --name phase9
+SEED_CONFIRM=yes npm run db:seed   # demo data + superadmin@eduflow.app / password123
+npm run typecheck && npm run lint && npm test
+npm run dev                    # → /superadmin (platform) · /admin/subscription (school)
+```
+
+Demo accounts: `admin@eduflow.com` (school admin), `superadmin@eduflow.app`
+(platform owner) — password `password123`.
+
+New in Phase 9 (files): `src/lib/saas/*` (tenant guard, features, usage,
+logger, audit, billing/email/storage providers), `src/app/superadmin/*`,
+`src/app/api/v1/*`, `src/app/api/billing/*`, `src/app/api/onboarding/*`,
+`src/app/onboarding/*`, `scripts/backup.ts`, `scripts/restore.sh`,
+`scripts/verify-tenant-isolation.sh`, `vercel.json`, `.github/workflows/ci.yml`,
+`docs/*`. See `docs/ARCHITECTURE.md` and `docs/QA.md` for details.

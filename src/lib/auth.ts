@@ -7,6 +7,7 @@ import type { UserRole } from "@prisma/client";
 import type { Session } from "next-auth";
 
 import { logActivity } from "@/lib/notifications";
+import { recordUsage } from "@/lib/saas/usage";
 import { authConfig } from "./auth.config";
 
 const nextAuth = NextAuth({
@@ -15,6 +16,9 @@ const nextAuth = NextAuth({
     async signIn({ user }) {
       if (user?.id) {
         await logActivity({ userId: user.id, action: "LOGIN", entityType: "User" });
+        if (user.schoolId) {
+          await recordUsage(user.schoolId, "LOGINS", 1);
+        }
       }
     },
   },
