@@ -2214,18 +2214,83 @@ model LibraryAuditLog {
 // PHASE 9 — MULTI-TENANT SAAS LAYER
 // ═══════════════════════════════════════════════════════════════════
 
-enum SubscriptionStatus { TRIALING ACTIVE PAST_DUE CANCELED EXPIRED }
-enum SubscriptionCycle { MONTHLY YEARLY }
-enum BillingProvider { STRIPE PAYSTACK FLUTTERWAVE }
-enum BillingInvoiceStatus { DRAFT OPEN PAID OVERDUE VOID FAILED }
-enum CouponDiscountType { PERCENT FIXED }
-enum SupportTicketStatus { OPEN PENDING RESOLVED CLOSED }
-enum SupportTicketPriority { LOW MEDIUM HIGH URGENT }
-enum UsageMetric { STUDENTS TEACHERS API_CALLS AI_TOKENS STORAGE_KB LOGINS }
-enum FeatureModule { LIBRARY TRANSPORT PAYROLL AI HOSTEL CLINIC INVENTORY CERTIFICATES MESSAGING REPORTS BILLING }
-enum BackupJobStatus { PENDING RUNNING COMPLETED FAILED }
-enum EmailLogStatus { QUEUED SENT FAILED }
-enum WebhookEventStatus { PENDING DELIVERED FAILED }
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+enum SubscriptionCycle {
+  MONTHLY
+  YEARLY
+}
+enum BillingProvider {
+  STRIPE
+  PAYSTACK
+  FLUTTERWAVE
+}
+enum BillingInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  OVERDUE
+  VOID
+  FAILED
+}
+enum CouponDiscountType {
+  PERCENT
+  FIXED
+}
+enum SupportTicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum UsageMetric {
+  STUDENTS
+  TEACHERS
+  API_CALLS
+  AI_TOKENS
+  STORAGE_KB
+  LOGINS
+}
+enum FeatureModule {
+  LIBRARY
+  TRANSPORT
+  PAYROLL
+  AI
+  HOSTEL
+  CLINIC
+  INVENTORY
+  CERTIFICATES
+  MESSAGING
+  REPORTS
+  BILLING
+}
+enum BackupJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+enum EmailLogStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+enum WebhookEventStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
 
 /// Platform-level SaaS plan (Starter / Professional / Business / Enterprise).
 model SubscriptionPlan {
