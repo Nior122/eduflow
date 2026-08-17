@@ -83,3 +83,26 @@ Verify: registration works (trial created), login as
 `superadmin@eduflow.app` (seeded) opens `/superadmin`, a school admin sees
 `/admin/subscription`, a test checkout returns a provider URL, and the
 provider's test webhook flips the subscription to ACTIVE.
+
+### Baseline an existing database (db-pushed, no history)
+
+`scripts/migrate-deploy.mjs` auto-baselines databases created with
+`prisma db push`:
+
+1. `prisma migrate deploy` fails with P3005 ("schema is not empty").
+2. The script runs `prisma migrate diff --from-empty --to-schema-datamodel`
+   to write `prisma/migrations/0_init/migration.sql` (the full current
+   schema), then `prisma migrate resolve --applied 0_init` and `--applied`
+   for every pre-existing migration folder.
+3. It reconciles drift with `prisma db push --skip-generate`
+   (non-destructive — no `--accept-data-loss`), then deploys.
+
+This runs exactly once (after the baseline, history exists and plain
+`migrate deploy` succeeds). If you prefer to baseline manually instead:
+
+```bash
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
+npx prisma migrate resolve --applied 0_init
+npm run db:deploy
+```
+

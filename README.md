@@ -318,3 +318,23 @@ logger, audit, billing/email/storage providers), `src/app/superadmin/*`,
 `src/app/onboarding/*`, `scripts/backup.ts`, `scripts/restore.sh`,
 `scripts/verify-tenant-isolation.sh`, `vercel.json`, `.github/workflows/ci.yml`,
 `docs/*`. See `docs/ARCHITECTURE.md` and `docs/QA.md` for details.
+
+### Deploying against an existing database (auto-baseline)
+
+If your Neon/Postgres database was created with `npm run db:push` it has
+**no migration history**, and `prisma migrate deploy` refuses to run
+against a non-empty schema (error **P3005**). The build script
+(`scripts/migrate-deploy.mjs`) handles this automatically on the first
+deploy: it generates a `0_init` baseline from the current schema, records
+it and the pre-existing migrations as applied (`migrate resolve`),
+reconciles any drift with a non-destructive `prisma db push`, then
+deploys. Afterwards the database has a real migration history and
+subsequent builds are plain `migrate deploy`.
+
+> Fail-safe: the reconcile step (`db push`) never passes
+> `--accept-data-loss`; if the current schema would require a destructive
+> change the build fails loudly and you decide how to proceed.
+
+For a **fresh** database (empty), run `npx prisma migrate dev --name init`
+once to create the history, or use `npm run db:push`.
+
