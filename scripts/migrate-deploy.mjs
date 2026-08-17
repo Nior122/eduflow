@@ -4,7 +4,7 @@
  * 1. Prefers DIRECT_URL; otherwise derives the Neon direct connection
  *    from DATABASE_URL by removing the "-pooler" marker (Prisma Migrate
  *    cannot run through the pooled endpoint).
- * 2. Runs `prisma migrate deploy`.
+ * 2. Runs `prisma migrate deploy` (captured so errors can be inspected).
  * 3. AUTO-BASELINE (P3005): when the database was created with
  *    `prisma db push` (no _prisma_migrations history), migrate deploy
  *    refuses with "P3005 — schema is not empty". In that case the
@@ -18,7 +18,7 @@
  * `--accept-data-loss`; if one is required the build fails loudly
  * instead of mutating production data.
  *
- * NOTE: this is a plain Node ESM script (.mjs) — no TypeScript syntax.
+ * NOTE: plain Node ESM (.mjs) — no TypeScript syntax.
  */
 import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -87,8 +87,9 @@ function baselineExistingDatabase() {
   run("prisma migrate deploy");
 }
 
-// execSync failures carry the child output in error.stderr / error.stdout
-// (not in the message), so assemble the full text for the P3005 check.
+// execSync error text: with stdio:"inherit" the error object has
+// stdout/stderr = null, so deploy must be run CAPTURED for the P3005
+// signature to be visible here.
 function errorText(error) {
   const stderr =
     error && typeof error.stderr === "string"
@@ -105,12 +106,27 @@ function errorText(error) {
   return `${error && error.message ? error.message : ""} ${stderr} ${stdout}`;
 }
 
-try {
-  run("prisma migrate deploy");
-} catch (error) {
-  if (/P3005|schema is not empty/i.test(errorText(error))) {
-    baselineExistingDatabase();
-  } else {
+function deployWithBaselineFallback() {
+  let stdout;
+  try {
+    // Capture output instead of inheriting it, so a P3005 failure can be
+    // detected from error.stderr; relay stdout so the log stays readable.
+    stdout = execSync("prisma migrate deploy", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    process.stdout.write(stdout);
+  } catch (error) {
+    const text = errorText(error);
+    if (/P3005|schema is not empty/i.test(text)) {
+      baselineExistingDatabase();
+      return;
+    }
+    // Relay captured output, then fail.
+    if (error && error.stdout) process.stdout.write(String(error.stdout));
+    if (error && error.stderr) process.stderr.write(String(error.stderr));
     throw error;
   }
 }
+
+deployWithBaselineFallback();
