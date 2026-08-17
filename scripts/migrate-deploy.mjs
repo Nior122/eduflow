@@ -17,6 +17,8 @@
  * Fail-safe: `prisma db push` refuses destructive changes without
  * `--accept-data-loss`; if one is required the build fails loudly
  * instead of mutating production data.
+ *
+ * NOTE: this is a plain Node ESM script (.mjs) — no TypeScript syntax.
  */
 import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -33,9 +35,11 @@ function run(cmd, opts = {}) {
 
 // ── direct connection ──────────────────────────────────────────────
 const databaseUrl = process.env.DATABASE_URL ?? "";
-const directUrl = process.env.DIRECT_URL || (databaseUrl.includes("-pooler.")
-  ? databaseUrl.replace("-pooler.", ".")
-  : databaseUrl);
+const directUrl =
+  process.env.DIRECT_URL ||
+  (databaseUrl.includes("-pooler.")
+    ? databaseUrl.replace("-pooler.", ".")
+    : databaseUrl);
 if (!directUrl) {
   console.error("migrate-deploy: DATABASE_URL is not set (and no DIRECT_URL).");
   process.exit(1);
@@ -75,20 +79,36 @@ function baselineExistingDatabase() {
     run(`prisma migrate resolve --applied "${name}"`);
   }
 
-  console.log("migrate-deploy: reconciling schema drift with `prisma db push --skip-generate` (non-destructive).");
+  console.log(
+    "migrate-deploy: reconciling schema drift with `prisma db push --skip-generate` (non-destructive)."
+  );
   run("prisma db push --skip-generate");
 
   run("prisma migrate deploy");
 }
 
+// execSync failures carry the child output in error.stderr / error.stdout
+// (not in the message), so assemble the full text for the P3005 check.
+function errorText(error) {
+  const stderr =
+    error && typeof error.stderr === "string"
+      ? error.stderr
+      : error && Buffer.isBuffer(error.stderr)
+        ? error.stderr.toString()
+        : "";
+  const stdout =
+    error && typeof error.stdout === "string"
+      ? error.stdout
+      : error && Buffer.isBuffer(error.stdout)
+        ? error.stdout.toString()
+        : "";
+  return `${error && error.message ? error.message : ""} ${stderr} ${stdout}`;
+}
+
 try {
   run("prisma migrate deploy");
 } catch (error) {
-  // execSync errors carry the process output in .stderr/.stdout, not the
-  // message — assemble the text so the P3005 signature can be matched.
-  const err = error as Error & { stderr?: Buffer | string; stdout?: Buffer | string };
-  const text = `${err.message ?? ""} ${String(err.stderr ?? "")} ${String(err.stdout ?? "")}`;
-  if (/P3005|schema is not empty/i.test(text)) {
+  if (/P3005|schema is not empty/i.test(errorText(error))) {
     baselineExistingDatabase();
   } else {
     throw error;
