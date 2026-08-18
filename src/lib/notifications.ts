@@ -54,7 +54,7 @@ export async function logActivity(opts: {
         action: opts.action,
         entityType: opts.entityType ?? null,
         entityId: opts.entityId ?? null,
-        metadata: opts.metadata ?? undefined,
+        metadata: opts.metadata == null ? undefined : (opts.metadata as Prisma.InputJsonValue),
       },
     });
   } catch (error) {
