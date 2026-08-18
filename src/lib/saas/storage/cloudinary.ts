@@ -22,7 +22,7 @@ export const cloudinaryAdapter: StorageAdapter = {
       .digest("hex");
 
     const form = new FormData();
-    form.append("file", new Blob([buffer], { type: mimeType }), fileName);
+    form.append("file", new Blob([Uint8Array.from(buffer)], { type: mimeType }), fileName);
     form.append("folder", publicFolder);
     form.append("timestamp", timestamp);
     form.append("api_key", apiKey);
