@@ -56,7 +56,7 @@ export default function OnboardingPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const form = state?.school ?? { name: "", address: "", phone: "", email: "", website: "", motto: "", gradeSystem: "", logo: null };
+  const form: OnboardingState["school"] = state?.school ?? { id: "", name: "", address: "", phone: "", email: "", website: "", motto: "", gradeSystem: "", logo: null };
 
   const saveStep = async (data: Record<string, unknown>, next: number) => {
     setSaving(true);
