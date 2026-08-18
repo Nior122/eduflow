@@ -61,7 +61,7 @@ export async function GET(req: Request) {
       by: ["bookId"],
       where: { schoolId },
       _count: { _all: true },
-      orderBy: { _count: { _all: "desc" } },
+      orderBy: { _count: { bookId: "desc" } },
       take: 100,
     });
     const books = await prisma.libraryBook.findMany({
