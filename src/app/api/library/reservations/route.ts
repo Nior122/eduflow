@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   if (session?.user?.role === "STUDENT") where.studentId = session.user.studentId ?? "__none__";
   else if (session?.user?.role === "PARENT") where.student = { parentId: session.user.parentId ?? "__none__" };
   else if (studentId) where.studentId = studentId;
-  if (status) where.status = status;
+  if (status) where.status = status as Prisma.LibraryReservationWhereInput["status"];
 
   const reservations = await prisma.libraryReservation.findMany({
     where,
