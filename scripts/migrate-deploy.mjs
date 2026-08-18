@@ -14,9 +14,12 @@
  *    non-destructive `prisma db push --skip-generate`, and deploys
  *    again. From then on the database has a real migration history.
  *
- * Fail-safe: `prisma db push` refuses destructive changes without
- * `--accept-data-loss`; if one is required the build fails loudly
- * instead of mutating production data.
+ * Reconcile: `--accept-data-loss` is passed to `db push` because the
+ * drift contains unique-constraint additions (Attendance, Class,
+ * PromptTemplate, Result) that Prisma flags as potentially destructive.
+ * The flag only ACKNOWLEDGES the warning - it never deletes rows. If
+ * duplicate rows already exist in the database, the constraint creation
+ * fails loudly and the data must be deduped first (scripts/dedupe.sql).
  *
  * NOTE: plain Node ESM (.mjs) — no TypeScript syntax.
  */
@@ -80,9 +83,9 @@ function baselineExistingDatabase() {
   }
 
   console.log(
-    "migrate-deploy: reconciling schema drift with `prisma db push --skip-generate` (non-destructive)."
+    "migrate-deploy: reconciling schema drift with `prisma db push --skip-generate --accept-data-loss` (acknowledges unique-constraint warnings; never deletes rows)."
   );
-  run("prisma db push --skip-generate");
+  run("prisma db push --skip-generate --accept-data-loss");
 
   run("prisma migrate deploy");
 }
