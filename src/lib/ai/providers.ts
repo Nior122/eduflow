@@ -577,12 +577,22 @@ async function* streamGemini(req: AiRequest): AsyncGenerator<AiStreamEvent> {
 // ─── unified entry points ────────────────────────────────────────────
 
 export async function complete(req: AiRequest): Promise<AiResult> {
+  if (!providerKey(req.provider)) {
+    throw new Error(
+      `No API key configured for AI provider "${req.provider}" - set ${AI_PROVIDERS[req.provider].envKey} in the environment`
+    );
+  }
   if (req.provider === "anthropic") return completeAnthropic(req);
   if (req.provider === "gemini") return completeGemini(req);
   return completeOpenAiCompat(req);
 }
 
 export async function* stream(req: AiRequest): AsyncGenerator<AiStreamEvent> {
+  if (!providerKey(req.provider)) {
+    throw new Error(
+      `No API key configured for AI provider "${req.provider}" - set ${AI_PROVIDERS[req.provider].envKey} in the environment`
+    );
+  }
   if (req.provider === "anthropic") {
     yield* streamAnthropic(req);
     return;

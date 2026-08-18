@@ -59,8 +59,9 @@ export async function getAiConfig(schoolId: string): Promise<AiRuntimeConfig> {
     temperature: setting?.temperature ?? 0.7,
     maxTokens: setting?.maxTokens ?? 2048,
     streamingEnabled: setting?.streamingEnabled ?? true,
-    providerReady: !!providerKey(provider),
     fallbackProvider: setting?.fallbackProvider ?? true,
+    providerReady:
+      !!providerKey(provider) || ((setting?.fallbackProvider ?? true) && availableProviders().length > 0),
     monthlyBudgetCents: setting?.monthlyBudgetCents ?? 20000,
     modulesEnabled: (setting?.modulesEnabled as Record<string, boolean> | null) ?? {},
   };
