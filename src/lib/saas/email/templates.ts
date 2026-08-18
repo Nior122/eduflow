@@ -2,7 +2,8 @@
 export interface SaaSEmailInput {
   to: string;
   subject: string;
-  html: string;
+  /** Rendered body override. Optional: when omitted, `template` + `data` are rendered. */
+  html?: string;
   template?: string;
   data?: Record<string, unknown>;
 }

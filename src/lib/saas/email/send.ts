@@ -7,6 +7,14 @@ import { renderTemplate, type SaaSEmailInput } from "./templates";
 
 export async function sendSaaSEmail(input: SaaSEmailInput): Promise<"SENT" | "QUEUED" | "FAILED"> {
   const html = renderTemplate(input.template, input.data ?? {}) ?? input.html;
+  if (!html) {
+    logger.error("email send skipped: no body (unknown template and no html override)", {
+      to: input.to,
+      subject: input.subject,
+      template: input.template ?? null,
+    });
+    return "FAILED";
+  }
   const apiKey = process.env.RESEND_API_KEY;
   let status: "SENT" | "QUEUED" | "FAILED" = "QUEUED";
   let error: string | null = null;
