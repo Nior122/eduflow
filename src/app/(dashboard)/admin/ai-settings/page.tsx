@@ -76,8 +76,10 @@ export default function AdminAiSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
+      const text = await res.text();
+      let data: any = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       toast({ title: "AI settings saved", variant: "success" });
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Save failed", variant: "destructive" });
@@ -96,8 +98,10 @@ export default function AdminAiSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: settings.provider as never, model: settings.model ?? undefined }),
       });
-      const data = await res.json();
-      setTestResult(data);
+      const text = await res.text();
+      let data: any = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      setTestResult(data ?? { ok: false, error: "Test endpoint returned an empty response" });
     } catch (err) {
       setTestResult({ ok: false, error: err instanceof Error ? err.message : "Test failed" });
     } finally {

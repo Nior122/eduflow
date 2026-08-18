@@ -33,8 +33,10 @@ export default function AdminAiAnalyticsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ includeSummary: true }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      const text = await res.text();
+      let data: any = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       setMetrics(data.metrics);
       setSummary(data.summary);
     } catch (err) {

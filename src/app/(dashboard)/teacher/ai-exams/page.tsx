@@ -56,8 +56,10 @@ export default function TeacherAiExamsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject: subject.trim(), className: className.trim() || undefined, topic: topic.trim(), durationMins: Number(durationMins) || 60 }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
+      const text = await res.text();
+      let data: any = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       toast({ title: "Exam generated", variant: "success" });
       setExams((prev) => [data.exam, ...prev]);
     } catch (err) {

@@ -266,6 +266,16 @@ export async function aiComplete(opts: CallOptions): Promise<AiCallResult> {
     status: "ERROR",
     error: message,
   });
+  await logAiUsage({
+    schoolId: opts.schoolId,
+    userId: opts.userId,
+    module: opts.module,
+    provider: cfg.provider,
+    model: cfg.model,
+    latencyMs: Date.now() - started,
+    status: "ERROR",
+    error: message,
+  });
   throw new Error(message);
 }
 

@@ -67,21 +67,35 @@ function safeJsonParse(s: string | undefined): Record<string, unknown> {
 
 async function fetchWithRetry(url: string, init: RequestInit, retries = 2): Promise<Response> {
   let last: Response | null = null;
+  let lastError: unknown = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(url, init);
-    if (res.status === 429 || res.status >= 500) {
-      last = res;
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
-      continue;
+    try {
+      // Hard timeout per attempt so a hung provider cannot hang the route.
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
+      if (res.status === 429 || res.status >= 500) {
+        last = res;
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      } else {
+        return res;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
     }
-    return res;
   }
-  throw new Error(`AI provider unreachable after ${retries + 1} attempts (${last?.status ?? "network"})`);
+  if (lastError) throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  throw await errorFrom(last!);
 }
 
 async function errorFrom(res: Response): Promise<Error> {
+  const status = res.status;
+  let reason = "";
+  if (status === 401 || status === 403) reason = "AI provider authentication failed";
+  else if (status === 429) reason = "AI provider rate limit reached";
+  else if (status === 404) reason = "AI provider endpoint or model not found";
+  else if (status >= 500) reason = "AI provider temporarily unavailable";
   const body = await res.text().catch(() => "");
-  return new Error(`AI provider error (${res.status}): ${body.slice(0, 300)}`);
+  return new Error(`${reason || `AI provider error (${status})`}${body ? `: ${body.slice(0, 300)}` : ""}`);
 }
 
 export function truncateText(text: string, max = 12000): string {
