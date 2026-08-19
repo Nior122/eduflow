@@ -98,7 +98,7 @@ export function AnnouncementsUI({ canManage = false }: { canManage?: boolean }) 
     setLoading(true);
     try {
       const res = await fetch("/api/announcements");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.announcements) setItems(data.announcements);
     } catch {
       /* ignore */
@@ -110,8 +110,8 @@ export function AnnouncementsUI({ canManage = false }: { canManage?: boolean }) 
   useEffect(() => {
     load();
     if (canManage) {
-      fetch("/api/admin/classes").then((r) => r.json()).then((d) => d?.classes && setClasses(d.classes)).catch(() => {});
-      fetch("/api/admin/departments").then((r) => r.json()).then((d) => d?.departments && setDepts(d.departments)).catch(() => {});
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)).then((d) => d?.classes && setClasses(d.classes)).catch(() => {});
+      fetch("/api/admin/departments").then((r) => parseJsonBody(r)).then((d) => d?.departments && setDepts(d.departments)).catch(() => {});
     }
   }, [load, canManage]);
 
@@ -159,7 +159,7 @@ export function AnnouncementsUI({ canManage = false }: { canManage?: boolean }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save");
       toast({ title: editing ? "Announcement updated" : "Announcement published — recipients notified", variant: "success" });
       setComposeOpen(false);

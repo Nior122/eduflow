@@ -98,7 +98,7 @@ export default function AttendancePage() {
           records: Object.entries(records).map(([studentId, status]) => ({ studentId, status })),
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `Attendance saved (${data.count ?? records.length} students)`, variant: "success" });
     } catch (err) {

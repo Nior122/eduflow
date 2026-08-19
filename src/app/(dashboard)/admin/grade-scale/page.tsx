@@ -41,7 +41,7 @@ export default function GradeScalePage() {
     setLoading(true);
     try {
       const res = await fetch("/api/grade-bands");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       const loaded = data.gradeBands ?? [];
       setBands(loaded.length ? loaded.map((b: Band) => ({ ...b })) : DEFAULT_BANDS);
     } finally {
@@ -70,7 +70,7 @@ export default function GradeScalePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bands }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save grade scale");
       setBands(data.gradeBands ?? bands);
       toast({ title: "Grading scale saved" });

@@ -39,7 +39,7 @@ export default function TeacherAiExamsPage() {
 
   useEffect(() => {
     fetch("/api/ai/exams")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setExams(d.exams ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -59,7 +59,7 @@ export function NotificationDrawer() {
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications?limit=6");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.notifications) {
         setItems(data.notifications);
         setUnread(data.unread ?? 0);

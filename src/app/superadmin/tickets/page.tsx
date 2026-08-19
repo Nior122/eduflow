@@ -40,7 +40,7 @@ export default function TicketsPage() {
   const load = (status = filter) => {
     setLoading(true);
     fetch(`/api/superadmin/tickets?status=${status}`)
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setTickets(d.tickets ?? []))
       .catch(() => toast({ title: "Failed to load tickets", variant: "destructive" }))
       .finally(() => setLoading(false));

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   if (!schoolId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(homeworkSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

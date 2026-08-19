@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
   });
   if (!borrow) return NextResponse.json({ error: "Active borrow not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => ({}));
+  const body = await parseJsonBody(req).catch(() => ({}));
   const parsed = validate(libraryReturnSchema, body);
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

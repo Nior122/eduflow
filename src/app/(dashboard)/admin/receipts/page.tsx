@@ -43,7 +43,7 @@ export default function ReceiptsPage() {
       if (from) params.set("from", from);
       if (to) params.set("to", to);
       const res = await fetch(`/api/finance/receipts?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setReceipts(data.receipts ?? []);
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ export default function ReceiptsPage() {
   const verify = async (r: ReceiptRow) => {
     try {
       const res = await fetch(`/api/finance/receipts/verify?code=${r.qrCode}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Verification failed");
       toast({ title: `Verified: ${data.studentName} · ${formatCurrency(data.amount)}` });
     } catch (e) {

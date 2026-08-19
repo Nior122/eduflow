@@ -15,7 +15,7 @@ export async function PUT(req: Request) {
   const guard = await apiGuard({ roles: ["SUPER_ADMIN"] });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const data: Record<string, unknown> = {};
   if (typeof body?.allowRegistration === "boolean") data.allowRegistration = body.allowRegistration;
   if (typeof body?.defaultTrialDays === "number") data.defaultTrialDays = body.defaultTrialDays;

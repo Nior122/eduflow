@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ document: doc }, { status: 201 });
   }
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const title = typeof body?.title === "string" ? body.title.trim() : "";
   const content = typeof body?.content === "string" ? body.content.trim() : "";
   if (!title || !content) {

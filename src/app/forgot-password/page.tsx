@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to send reset link");
       if (data.dev && data.resetUrl) setDevLink(data.resetUrl);
       setSent(true);

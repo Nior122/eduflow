@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
   const { id } = await params;
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = z
       .object({ event: z.string().min(1, "Event is required").max(100), note: z.string().max(500).optional() })
       .safeParse(body);

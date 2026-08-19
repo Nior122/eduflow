@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const schoolId = session.user.schoolId;
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(lessonPlanSaveSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

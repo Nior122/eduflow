@@ -35,7 +35,7 @@ export async function PATCH(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = session.user.id;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(preferencesUpdateSchema, body ?? {});
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

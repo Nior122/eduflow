@@ -40,7 +40,7 @@ export default function TeacherAiCommunicationPage() {
 
   useEffect(() => {
     fetch("/api/ai/students")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         setStudents(d.students ?? []);
         if (d.students?.length) setStudentId(d.students[0].id);
@@ -58,7 +58,7 @@ export default function TeacherAiCommunicationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, scenario, notes: notes.trim() || undefined }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setDraft(data.draft);
       setParentName(`parent of ${data.student.name}`);
@@ -78,7 +78,7 @@ export default function TeacherAiCommunicationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, subject: SCENARIOS.find((s) => s.value === scenario)?.label ?? "Message from school", content: draft.trim() }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Send failed");
       toast({ title: `Message delivered to ${data.to}`, variant: "success" });
       setDraft("");

@@ -44,7 +44,7 @@ export default function TranscriptsPage() {
     setSearching(true);
     try {
       const res = await fetch(`/api/admin/students?search=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Search failed");
       setResults(data.students ?? []);
       setSearched(true);
@@ -60,7 +60,7 @@ export default function TranscriptsPage() {
     setTranscript(null);
     try {
       const res = await fetch(`/api/transcripts/${studentId}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Transcript unavailable");
       setTranscript(data.transcript);
     } catch (e) {

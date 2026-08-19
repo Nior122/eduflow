@@ -29,19 +29,36 @@ npm run db:push
 
 ### Seed (development only)
 
-The seed **wipes all existing data** — it is disabled in production and requires explicit confirmation:
+The original seed **wipes all existing data** — it is disabled in production and requires explicit confirmation:
 
 ```bash
 SEED_CONFIRM=yes npm run db:seed
 ```
 
-Demo accounts (password `password123`): `admin@eduflow.com`, `teacher@eduflow.com`, `parent@eduflow.com`, `student@eduflow.com`.
+Legacy demo accounts (password `password123`): `admin@eduflow.com`, `teacher@eduflow.com`, `parent@eduflow.com`, `student@eduflow.com`.
 
-### Run
+### Demo tenant (recommended) — isolated demo seed
+
+For a safe, **isolated** demo environment that never touches real customer
+tenants, use the dedicated demo seed. It creates **"EduFlow Demo Academy"**:
+40 students, 9 teachers, 9 classes (Primary 1–6 + JSS 1–3), weeks of
+attendance, published results + report cards, full finance data,
+assignments, homework, announcements, a conflict-free timetable and AI
+defaults — see `docs/DEMO.md` for the full checklist.
 
 ```bash
-npm run dev       # http://localhost:3000
+SEED_CONFIRM=yes npm run db:seed-demo
 ```
+
+Demo accounts (password is printed by the seed and documented in
+`docs/DEMO.md` — it is never stored in frontend code):
+`demo.admin@eduflow.demo`, `demo.teacher@eduflow.demo`,
+`demo.parent@eduflow.demo`, `demo.student@eduflow.demo`,
+`demo.finance@eduflow.demo`.
+
+The demo seed is **idempotent and non-destructive to other tenants**: it
+only ever rewrites the `eduflow-demo-academy` tenant's own records, so it
+can be re-run safely against a populated database.
 
 ## Verification Checklist (before deploying)
 

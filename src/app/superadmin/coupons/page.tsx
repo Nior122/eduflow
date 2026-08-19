@@ -37,7 +37,7 @@ export default function CouponsPage() {
 
   const load = () =>
     fetch("/api/superadmin/coupons")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setCoupons(d.coupons ?? []));
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function CouponsPage() {
           maxRedemptions: form.maxRedemptions ? Number(form.maxRedemptions) : null,
         }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error ?? "Create failed");
       setForm({ code: "", description: "", discountType: "PERCENT", discountValue: "10", maxRedemptions: "" });
       await load();

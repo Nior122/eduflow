@@ -99,7 +99,7 @@ export default function AdminCalendarPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Event updated" : "Event created", variant: "success" });
       setDialogOpen(false);

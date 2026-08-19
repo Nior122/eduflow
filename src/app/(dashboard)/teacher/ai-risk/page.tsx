@@ -44,7 +44,7 @@ export default function TeacherAiRiskPage() {
 
   useEffect(() => {
     fetch("/api/ai/students")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         setStudents(d.students ?? []);
         if (d.students?.length) setStudentId(d.students[0].id);

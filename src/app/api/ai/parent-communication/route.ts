@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if (guard instanceof NextResponse) return guard;
   const { session, schoolId, userId } = guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(parentCommSchema, body ?? {});
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

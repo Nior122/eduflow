@@ -83,7 +83,7 @@ export function ProfileUI() {
 
   useEffect(() => {
     fetch("/api/profile")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         if (!d?.user) return;
         setData(d);
@@ -108,7 +108,7 @@ export function ProfileUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim() || undefined, phone: phone.trim() || null }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Failed to save");
       setData((prev) => (prev ? { ...prev, user: { ...prev.user, name: d.user.name, phone: d.user.phone } } : prev));
       toast({ title: "Profile updated", variant: "success" });
@@ -126,7 +126,7 @@ export function ProfileUI() {
       form.append("file", file);
       form.append("folder", "avatars");
       const res = await fetch("/api/upload", { method: "POST", body: form });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Upload failed");
       const patch = await fetch("/api/profile", {
         method: "PATCH",
@@ -154,7 +154,7 @@ export function ProfileUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Failed to change password");
       toast({ title: "Password changed", variant: "success" });
       setCurrentPassword("");
@@ -182,7 +182,7 @@ export function ProfileUI() {
           inAppNotifications: inAppNotif,
         }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Failed to save preferences");
       toast({ title: "Preferences saved", variant: "success" });
     } catch (err) {

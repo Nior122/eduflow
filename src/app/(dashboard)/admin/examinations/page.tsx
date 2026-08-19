@@ -81,9 +81,9 @@ export default function ExaminationsPage() {
         fetch("/api/admin/sessions"),
         fetch("/api/admin/classes"),
       ]);
-      const examData = await examRes.json();
-      const sessionData = await sessionRes.json();
-      const classData = await classRes.json();
+      const examData = await parseJsonBody(examRes);
+      const sessionData = await parseJsonBody(sessionRes);
+      const classData = await parseJsonBody(classRes);
       setExaminations(examData.examinations ?? []);
       setSessions(sessionData.sessions ?? []);
       setClasses(classData.classes ?? []);
@@ -100,7 +100,7 @@ export default function ExaminationsPage() {
   const loadTerms = async (sessionId: string) => {
     if (!sessionId) return;
     const res = await fetch(`/api/admin/terms?sessionId=${sessionId}`);
-    const data = await res.json();
+    const data = await parseJsonBody(res);
     setTerms(data.terms ?? []);
   };
 
@@ -139,7 +139,7 @@ export default function ExaminationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save");
       toast({ title: editingId ? "Examination updated" : "Examination created" });
       setDialogOpen(false);
@@ -154,7 +154,7 @@ export default function ExaminationsPage() {
   const action = async (id: string, path: string, successMsg: string) => {
     try {
       const res = await fetch(`/api/examinations/${id}/${path}`, { method: "POST" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Action failed");
       toast({ title: successMsg });
       load();
@@ -166,7 +166,7 @@ export default function ExaminationsPage() {
   const duplicate = async (id: string) => {
     try {
       const res = await fetch(`/api/examinations/${id}/duplicate`, { method: "POST" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Duplicate failed");
       toast({ title: "Examination duplicated (DRAFT)" });
       load();
@@ -178,7 +178,7 @@ export default function ExaminationsPage() {
   const remove = async (ex: Examination) => {
     try {
       const res = await fetch(`/api/examinations/${ex.id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Delete failed");
       toast({ title: "Examination deleted" });
       load();

@@ -33,7 +33,7 @@ export default function FinanceDashboardPage() {
 
   useEffect(() => {
     fetch("/api/finance/dashboard")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setData(d.dashboard))
       .catch(() => {})
       .finally(() => setLoading(false));

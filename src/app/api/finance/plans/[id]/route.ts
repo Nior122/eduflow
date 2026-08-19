@@ -13,7 +13,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
   const { id } = await params;
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(planUpdateSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

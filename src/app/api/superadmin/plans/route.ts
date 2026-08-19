@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SUPER_ADMIN"] });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const code = typeof body?.code === "string" ? body.code.toUpperCase() : null;
   const name = typeof body?.name === "string" ? body.name : null;
   if (!code || !name) return NextResponse.json({ error: "code and name are required" }, { status: 400 });

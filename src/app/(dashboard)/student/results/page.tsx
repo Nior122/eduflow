@@ -38,7 +38,7 @@ export default function StudentResultsPage() {
 
   useEffect(() => {
     fetch("/api/student/results")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((data) => {
         setCards(data.reportCards ?? []);
         setTerms(data.resultsByTerm ?? []);

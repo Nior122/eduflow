@@ -69,9 +69,9 @@ export default function OutstandingPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
-      fetch("/api/admin/students?limit=200").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/students?limit=200").then((r) => parseJsonBody(r)),
     ]).then(([s, c, st]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -92,8 +92,8 @@ export default function OutstandingPage() {
       if (termId) params.set("termId", termId);
       if (defaultersOnly) params.set("defaulters", "1");
       const [oRes, pRes] = await Promise.all([
-        fetch(`/api/finance/outstanding?${params}`).then((r) => r.json()),
-        fetch(`/api/finance/plans?${classId ? `studentId=${classId}` : ""}`).then((r) => r.json()).catch(() => ({ plans: [] })),
+        fetch(`/api/finance/outstanding?${params}`).then((r) => parseJsonBody(r)),
+        fetch(`/api/finance/plans?${classId ? `studentId=${classId}` : ""}`).then((r) => parseJsonBody(r)).catch(() => ({ plans: [] })),
       ]);
       setRows(oRes.rows ?? []);
       setTotals(oRes.totals ?? { studentsOwing: 0, totalBilled: 0, totalBalance: 0 });
@@ -113,7 +113,7 @@ export default function OutstandingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invoiceIds }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `Reminders queued for ${data.sent} invoice(s)` });
       load();
@@ -142,7 +142,7 @@ export default function OutstandingPage() {
           dueDate: planForm.dueDate || null,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Payment plan created" });
       setPlanOpen(false);
@@ -162,7 +162,7 @@ export default function OutstandingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `Plan ${status.toLowerCase()}` });
       load();

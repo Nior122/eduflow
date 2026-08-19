@@ -59,7 +59,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
     return NextResponse.json({ error: "Only draft invoices can be edited (locked: " + existing.status + ")" }, { status: 409 });
   }
 
-  const body = await req.json();
+  const body = await parseJsonBody(req);
   const parsed = validate(invoiceUpdateSchema, body);
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

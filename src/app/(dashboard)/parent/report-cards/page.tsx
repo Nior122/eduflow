@@ -38,7 +38,7 @@ export default function ParentReportCardsPage() {
     setDataLoading(true);
     try {
       const res = await fetch(`/api/parent/${childId}/report-card`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (res.ok) setData(d);
     } catch {
       /* ignore */

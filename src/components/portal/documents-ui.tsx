@@ -119,7 +119,7 @@ export function DocumentsUI({ canUpload = false }: { canUpload?: boolean }) {
       if (category !== "ALL") params.set("category", category);
       if (q.trim()) params.set("q", q.trim());
       const res = await fetch(`/api/documents?${params.toString()}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.documents) setItems(data.documents);
     } catch {
       /* ignore */
@@ -144,7 +144,7 @@ export function DocumentsUI({ canUpload = false }: { canUpload?: boolean }) {
       form.append("category", docCategory);
       form.append("audience", audience);
       const res = await fetch("/api/documents", { method: "POST", body: form });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Upload failed");
       toast({ title: "Document uploaded", variant: "success" });
       setUploadOpen(false);

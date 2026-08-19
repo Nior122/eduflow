@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   if (g.denied) return g.denied;
   const schoolId = g.schoolId!;
 
-  const body = await req.json();
+  const body = await parseJsonBody(req);
   const parsed = validate(reportCardGenerateSchema, body);
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

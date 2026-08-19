@@ -113,7 +113,7 @@ export default function ParentsPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Parent updated" : "Parent added", variant: "success" });
       setDialogOpen(false);

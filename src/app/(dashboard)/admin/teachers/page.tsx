@@ -126,7 +126,7 @@ export default function TeachersPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Teacher updated" : "Teacher added", variant: "success" });
       setDialogOpen(false);
@@ -170,7 +170,7 @@ export default function TeachersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classId: assignClass, subjectId: assignSubject, teacherId: assignFor.id }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Subject assigned", variant: "success" });
       setAssignFor(null);

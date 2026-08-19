@@ -25,7 +25,7 @@ export function NotificationsUI() {
     try {
       const offset = reset ? 0 : items.length;
       const res = await fetch(`/api/notifications?limit=${PAGE_SIZE}&offset=${offset}${tab === "unread" ? "&unreadOnly=1" : ""}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.notifications) {
         setItems((prev) => (reset ? data.notifications : [...prev, ...data.notifications]));
         setUnread(data.unread ?? 0);

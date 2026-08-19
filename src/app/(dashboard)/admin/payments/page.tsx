@@ -55,7 +55,7 @@ export default function PaymentsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/students?limit=200").then((r) => r.json()).then((d) => setStudents(d.students ?? [])).catch(() => {});
+    fetch("/api/admin/students?limit=200").then((r) => parseJsonBody(r)).then((d) => setStudents(d.students ?? [])).catch(() => {});
   }, []);
 
   const load = useCallback(async () => {
@@ -67,7 +67,7 @@ export default function PaymentsPage() {
       if (from) params.set("from", from);
       if (to) params.set("to", to);
       const res = await fetch(`/api/finance/payments?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setPayments(data.payments ?? []);
     } finally {
       setLoading(false);
@@ -82,10 +82,10 @@ export default function PaymentsPage() {
     if (!studentId) return;
     try {
       const res = await fetch(`/api/finance/invoices?studentId=${studentId}&status=ISSUED`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       const issued = data.invoices ?? [];
-      const partial = await fetch(`/api/finance/invoices?studentId=${studentId}&status=PARTIAL`).then((r) => r.json());
-      const overdue = await fetch(`/api/finance/invoices?studentId=${studentId}&status=OVERDUE`).then((r) => r.json());
+      const partial = await fetch(`/api/finance/invoices?studentId=${studentId}&status=PARTIAL`).then((r) => parseJsonBody(r));
+      const overdue = await fetch(`/api/finance/invoices?studentId=${studentId}&status=OVERDUE`).then((r) => parseJsonBody(r));
       const all = [...issued, ...(partial.invoices ?? []), ...(overdue.invoices ?? [])].map((i: OpenInvoice) => ({
         id: i.id,
         invoiceNumber: i.invoiceNumber,
@@ -117,7 +117,7 @@ export default function PaymentsPage() {
           notes: payForm.notes || undefined,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Payment failed");
       toast({
         title: `Payment recorded — receipt ${data.receipt.receiptNumber} generated`,

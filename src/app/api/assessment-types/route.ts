@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const schoolId = g.schoolId!;
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(assessmentTypeSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
@@ -53,7 +53,7 @@ export async function PATCH(req: Request) {
   if (g.denied) return g.denied;
   const schoolId = g.schoolId!;
 
-  const body = await req.json();
+  const body = await parseJsonBody(req);
   const termId = body?.termId as string | undefined;
   const items = (body?.items ?? []) as { assessmentTypeId: string; weight: number; maxScore: number }[];
   if (!termId || !items.length) {

@@ -26,7 +26,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch("/api/superadmin/settings")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setSettings(d.settings))
       .catch(() => toast({ title: "Failed to load settings", variant: "destructive" }));
   }, []);

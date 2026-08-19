@@ -34,7 +34,7 @@ export default function GatewaysPage() {
 
   useEffect(() => {
     fetch("/api/finance/gateways")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         const rows = d.gateways ?? [];
         setConfigs(rows);
@@ -71,11 +71,11 @@ export default function GatewaysPage() {
           isActive: f.isActive,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `${GATEWAY_META[gateway].label} configuration saved` });
       const res2 = await fetch("/api/finance/gateways");
-      const d2 = await res2.json();
+      const d2 = await parseJsonBody(res2);
       setConfigs(d2.gateways ?? []);
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : "Failed", variant: "destructive" });

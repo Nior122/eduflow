@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
   const existing = await prisma.promptTemplate.findFirst({ where: { id, schoolId }, select: { id: true, key: true, version: true } });
   if (!existing) return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(promptTemplateUpdateSchema, body ?? {});
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

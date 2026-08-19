@@ -8,3 +8,6 @@ node_modules/
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# .env.example is a committed template (values stay in .env.local)
+!.env.example

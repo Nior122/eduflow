@@ -43,7 +43,7 @@ export default function ReportCardPrintPage() {
   useEffect(() => {
     fetch(`/api/report-cards/${params.id}`)
       .then(async (r) => {
-        const data = await r.json();
+        const data = await parseJsonBody(r);
         if (!r.ok) throw new Error(data.error || "Report card not found");
         return data;
       })
@@ -55,7 +55,7 @@ export default function ReportCardPrintPage() {
     if (!card) return;
     try {
       const res = await fetch(`/api/report-cards/verify?code=${card.verificationCode}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Verification failed");
       toast({ title: `Verified: ${data.studentName} · ${data.className} · avg ${data.overallAverage}` });
     } catch (e) {

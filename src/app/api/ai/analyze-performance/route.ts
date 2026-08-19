@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = z.object({ studentId: z.string().min(1) }).safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Validation failed" }, { status: 400 });

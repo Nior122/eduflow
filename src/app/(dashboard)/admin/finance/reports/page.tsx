@@ -49,8 +49,8 @@ export default function FinanceReportsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
     ]).then(([s, c]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -68,7 +68,7 @@ export default function FinanceReportsPage() {
       if (classId) params.set("classId", classId);
       const res = await fetch(`/api/finance/reports?${params}`);
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await parseJsonBody(res).catch(() => ({}));
         throw new Error(data.error || "Report failed");
       }
       if (format === "csv") {
@@ -82,7 +82,7 @@ export default function FinanceReportsPage() {
         toast({ title: "CSV downloaded" });
         return;
       }
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setReport(data.report);
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : "Report failed", variant: "destructive" });

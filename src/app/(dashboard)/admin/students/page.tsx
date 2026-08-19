@@ -145,7 +145,7 @@ export default function StudentsPage() {
     try {
       const res = await fetch(`/api/admin/students?${params}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await parseJsonBody(res);
         setStudents(data.students ?? []);
         setTotal(data.total ?? 0);
       }
@@ -215,7 +215,7 @@ export default function StudentsPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save");
       toast({ title: editing ? "Student updated" : "Student created", variant: "success" });
       setDialogOpen(false);
@@ -248,7 +248,7 @@ export default function StudentsPage() {
     try {
       const res = await fetch(`/api/admin/students/${student.id}`);
       if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setViewing(data.student);
     } catch {
       toast({ title: "Failed to load student details", variant: "destructive" });
@@ -303,7 +303,7 @@ export default function StudentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Import failed");
       setImportResult({ created: data.created ?? 0, failed: data.failed ?? 0 });
       setImportText("");
@@ -327,7 +327,7 @@ export default function StudentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `${statusAction.action.charAt(0) + statusAction.action.slice(1).toLowerCase()} applied`, variant: "success" });
       setStatusAction(null);

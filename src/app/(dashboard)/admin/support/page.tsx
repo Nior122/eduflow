@@ -36,7 +36,7 @@ export default function SupportPage() {
 
   const load = () =>
     fetch("/api/support/tickets")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setTickets(d.tickets ?? []))
       .catch(() => toast({ title: "Failed to load tickets", variant: "destructive" }));
 

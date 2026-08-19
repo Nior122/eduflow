@@ -32,7 +32,7 @@ export default function SuperAdminOverview() {
 
   useEffect(() => {
     fetch("/api/superadmin/dashboard")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then(setData)
       .catch(() => toast({ title: "Failed to load dashboard", variant: "destructive" }));
   }, []);

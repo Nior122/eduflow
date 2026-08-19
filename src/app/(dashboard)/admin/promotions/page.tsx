@@ -67,8 +67,8 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
     ]).then(([s, c]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -85,7 +85,7 @@ export default function PromotionsPage() {
     try {
       const params = new URLSearchParams({ sessionId, termId, classId });
       const res = await fetch(`/api/promotions?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setCandidates(data.candidates ?? []);
       setHistory(data.history ?? []);
     } finally {
@@ -120,7 +120,7 @@ export default function PromotionsPage() {
           note,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Action failed");
       toast({ title: `${student.studentName} → ${action}` });
       setDialog(null);

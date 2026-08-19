@@ -27,7 +27,7 @@ export default function ReceiptPrintPage() {
   useEffect(() => {
     fetch(`/api/finance/receipts/${params.id}`)
       .then(async (r) => {
-        const d = await r.json();
+        const d = await parseJsonBody(r);
         if (!r.ok) throw new Error(d.error || "Receipt not found");
         return d;
       })
@@ -39,7 +39,7 @@ export default function ReceiptPrintPage() {
     if (!data) return;
     try {
       const res = await fetch(`/api/finance/receipts/verify?code=${data.receipt.qrCode}`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Verification failed");
       toast({ title: `Verified: ${d.studentName} · ${formatCurrency(d.amount)}` });
     } catch (e) {

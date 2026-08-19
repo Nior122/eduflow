@@ -50,7 +50,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (guard instanceof NextResponse) return guard;
   const { id } = await ctx.params;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const school = await prisma.school.findUnique({ where: { id }, include: { subscription: true } });
   if (!school) return NextResponse.json({ error: "School not found" }, { status: 404 });
 

@@ -41,7 +41,7 @@ export default function StudentDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error || "Failed to analyze");
       setAnalysis(d);
     } catch (err) {

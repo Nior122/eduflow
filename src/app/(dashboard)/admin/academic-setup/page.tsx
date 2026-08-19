@@ -54,7 +54,7 @@ export default function AcademicSetupPage() {
       const res = await fetch("/api/admin/sessions", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sessionForm),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Session created", variant: "success" });
       setSessionDialog(false);
@@ -87,7 +87,7 @@ export default function AcademicSetupPage() {
       const res = await fetch("/api/admin/terms", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(termForm),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Term created", variant: "success" });
       setTermDialog(false);

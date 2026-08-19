@@ -23,7 +23,7 @@ export default function PricingPage() {
 
   useEffect(() => {
     fetch("/api/billing/plans")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setPlans(d.plans ?? []))
       .catch(() => toast({ title: "Failed to load plans", variant: "destructive" }))
       .finally(() => setLoading(false));

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(forgotPasswordSchema, body);
     if (!parsed.ok) {
       // Do not reveal whether an account exists — same response as success.

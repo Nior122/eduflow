@@ -70,9 +70,9 @@ export default function ResultsApprovalPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
-      fetch("/api/admin/subjects").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/subjects").then((r) => parseJsonBody(r)),
     ]).then(([s, c, su]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -90,7 +90,7 @@ export default function ResultsApprovalPage() {
     try {
       const params = new URLSearchParams({ sessionId, termId, classId, subjectId });
       const res = await fetch(`/api/results/result-sheet?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setMeta(data.meta ?? null);
       setResults(data.results ?? []);
@@ -116,7 +116,7 @@ export default function ResultsApprovalPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resultIds: ids, action }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Workflow action failed");
       toast({ title: `${ACTION_LABEL[action]}: ${data.moved} result(s) → ${data.toStatus}` });
       loadSheet();
@@ -136,7 +136,7 @@ export default function ResultsApprovalPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classId, subjectId, sessionId, termId }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Recalculate failed");
       toast({ title: `Recomputed ${data.computed} result(s), ranked ${data.ranked} student(s)` });
       loadSheet();

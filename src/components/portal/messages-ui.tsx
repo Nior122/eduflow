@@ -102,7 +102,7 @@ export function MessagesUI() {
     setLoading(true);
     try {
       const res = await fetch(`/api/messages?folder=${folder}&q=${encodeURIComponent(q)}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.conversations) setConversations(data.conversations);
     } catch {
       /* ignore */
@@ -121,7 +121,7 @@ export function MessagesUI() {
     setLoadingThread(true);
     try {
       const res = await fetch(`/api/messages/${conv.lastId}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.messages) {
         setThread(data.messages);
         setConversations((prev) =>
@@ -154,7 +154,7 @@ export function MessagesUI() {
           replyToId: last.id,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to send");
       setReplyText("");
       toast({ title: "Reply sent", variant: "success" });
@@ -183,7 +183,7 @@ export function MessagesUI() {
     setRecipientQuery(query);
     try {
       const res = await fetch(`/api/messages/recipients?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok) setRecipients(data.recipients ?? []);
     } catch {
       /* ignore */
@@ -212,7 +212,7 @@ export function MessagesUI() {
       form.append("file", file);
       form.append("folder", "messages");
       const res = await fetch("/api/upload", { method: "POST", body: form });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Upload failed");
       const up = data.upload as Attachment;
       setAttachments((prev) => [...prev, { name: up.name, url: up.url, size: up.size, mime: up.mime }]);
@@ -241,7 +241,7 @@ export function MessagesUI() {
           draftId: editingDraft ? editingDraft.lastId : undefined,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: asDraft ? "Draft saved" : "Message sent", variant: "success" });
       setComposeOpen(false);

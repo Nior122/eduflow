@@ -54,7 +54,7 @@ export async function PATCH(req: Request) {
   if (guard instanceof NextResponse) return guard;
   const { schoolId } = guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(aiSettingsSchema, body ?? {});
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

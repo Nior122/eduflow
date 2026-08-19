@@ -17,7 +17,7 @@ export default function StudentTimetablePage() {
 
   useEffect(() => {
     fetch("/api/student/timetable")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => d && setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));

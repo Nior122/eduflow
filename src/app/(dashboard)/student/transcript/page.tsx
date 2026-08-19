@@ -25,7 +25,7 @@ export default function StudentTranscriptPage() {
 
   useEffect(() => {
     fetch("/api/student/transcript")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => d && setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));

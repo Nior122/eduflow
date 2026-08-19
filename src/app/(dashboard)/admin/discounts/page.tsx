@@ -68,10 +68,10 @@ export default function DiscountsPage() {
     setLoading(true);
     try {
       const [dRes, sRes, cRes, fRes] = await Promise.all([
-        fetch(`/api/finance/discounts${statusFilter ? `?status=${statusFilter}` : ""}`).then((r) => r.json()),
-        fetch("/api/admin/students?limit=200").then((r) => r.json()),
-        fetch("/api/admin/classes").then((r) => r.json()),
-        fetch("/api/admin/fees").then((r) => r.json()),
+        fetch(`/api/finance/discounts${statusFilter ? `?status=${statusFilter}` : ""}`).then((r) => parseJsonBody(r)),
+        fetch("/api/admin/students?limit=200").then((r) => parseJsonBody(r)),
+        fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
+        fetch("/api/admin/fees").then((r) => parseJsonBody(r)),
       ]);
       setDiscounts(dRes.discounts ?? []);
       setStudents(sRes.students ?? []);
@@ -104,7 +104,7 @@ export default function DiscountsPage() {
           validUntil: form.validUntil || null,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Discount created - pending approval" });
       setDialogOpen(false);
@@ -124,7 +124,7 @@ export default function DiscountsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Discount " + action.toLowerCase() + "d" });
       load();

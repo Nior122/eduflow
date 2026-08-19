@@ -67,7 +67,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ step, data }),
       });
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
+        const d = await parseJsonBody(res).catch(() => ({}));
         toast({ title: d.error ?? "Failed to save step", variant: "destructive" });
         return;
       }
@@ -84,7 +84,7 @@ export default function OnboardingPage() {
       fd.append("file", file);
       fd.append("folder", "logos");
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error ?? "Upload failed");
       await saveStep({ ...form, logo: d.upload.url }, step);
     } catch (e) {

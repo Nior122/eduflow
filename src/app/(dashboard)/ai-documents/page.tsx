@@ -31,7 +31,7 @@ export default function AiDocumentsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/ai/documents");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok) setDocs(data.documents ?? []);
     } catch {
       /* ignore */
@@ -58,7 +58,7 @@ export default function AiDocumentsPage() {
       if (action === "ask") form.append("question", question.trim());
       const res = await fetch("/api/ai/document-assistant", { method: "POST", body: form });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
+        const data = await parseJsonBody(res).catch(() => null);
         throw new Error(data?.error ?? "Upload failed");
       }
       if (res.headers.get("content-type")?.includes("text/event-stream")) {
@@ -67,7 +67,7 @@ export default function AiDocumentsPage() {
           else if (ev.type === "error") throw new Error(ev.message);
         });
       } else {
-        const data = await res.json();
+        const data = await parseJsonBody(res);
         setAnswer(data.text ?? "");
       }
       toast({ title: action === "summarize" ? "Summary ready" : "Answer ready", variant: "success" });

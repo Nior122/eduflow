@@ -36,7 +36,7 @@ export default function FeaturesPage() {
 
   useEffect(() => {
     fetch("/api/feature-flags")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then(setData)
       .catch(() => toast({ title: "Failed to load features", variant: "destructive" }));
   }, []);
@@ -50,7 +50,7 @@ export default function FeaturesPage() {
         body: JSON.stringify({ module, enabled }),
       });
       if (!res.ok) throw new Error("update failed");
-      const next = await fetch("/api/feature-flags").then((r) => r.json());
+      const next = await fetch("/api/feature-flags").then((r) => parseJsonBody(r));
       setData(next);
     } catch {
       toast({ title: "Failed to update feature", variant: "destructive" });

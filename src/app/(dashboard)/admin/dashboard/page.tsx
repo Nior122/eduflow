@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
       try {
         const res = await fetch("/api/admin/dashboard");
         if (res.ok) {
-          setData(await res.json());
+          setData(await parseJsonBody(res));
         }
       } catch (err) {
         console.error("Failed to load dashboard", err);

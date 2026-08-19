@@ -53,7 +53,7 @@ export default function PlansPage() {
 
   const load = () =>
     fetch("/api/superadmin/plans")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setPlans(d.plans ?? []));
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function PlansPage() {
     if (!confirm(`Delete plan ${p.name}?`)) return;
     const res = await fetch(`/api/superadmin/plans/${p.id}`, { method: "DELETE" });
     if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
+      const d = await parseJsonBody(res).catch(() => ({}));
       toast({ title: d.error ?? "Delete failed", variant: "destructive" });
       return;
     }

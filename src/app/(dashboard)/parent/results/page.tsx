@@ -35,7 +35,7 @@ export default function ParentResultsPage() {
 
   useEffect(() => {
     fetch("/api/parent/results")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((data) => setChildren(data.children ?? []))
       .finally(() => setLoading(false));
   }, []);

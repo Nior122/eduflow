@@ -51,7 +51,7 @@ export function AssistantWidget() {
     setLoadingHistory(true);
     try {
       const res = await fetch("/api/ai/conversations");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok) setConversations(data.conversations ?? []);
     } catch {
       /* ignore */
@@ -81,7 +81,7 @@ export function AssistantWidget() {
     setShowHistory(false);
     try {
       const res = await fetch(`/api/ai/conversations/${id}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok || !data?.conversation) return;
       setConversationId(data.conversation.id);
       setMessages((data.conversation.messages as Msg[]).filter((m) => m.role === "user" || m.role === "assistant"));

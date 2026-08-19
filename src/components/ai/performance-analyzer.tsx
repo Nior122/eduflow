@@ -42,7 +42,7 @@ export function PerformanceAnalyzer({ studentId, title = "AI Performance Analysi
   useEffect(() => {
     if (!studentId) {
       fetch("/api/ai/students")
-        .then((r) => r.json())
+        .then((r) => parseJsonBody(r))
         .then((d) => {
           if (d.students?.[0]) setOwnId(d.students[0].id);
         })
@@ -59,7 +59,7 @@ export function PerformanceAnalyzer({ studentId, title = "AI Performance Analysi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId: ownId }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Analysis failed");
       setMetrics(data.metrics);
       setAnalysis(data.analysis);

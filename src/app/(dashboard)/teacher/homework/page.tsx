@@ -104,7 +104,7 @@ export default function TeacherHomeworkPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Homework updated" : "Homework created", variant: "success" });
       setDialogOpen(false);
@@ -136,7 +136,7 @@ export default function TeacherHomeworkPage() {
     try {
       const res = await fetch(`/api/homework/${h.id}/submissions`);
       if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setSubs(data.submissions ?? []);
       const g: Record<string, { grade: string; feedback: string }> = {};
       (data.submissions ?? []).forEach((s: Submission) => {
@@ -160,7 +160,7 @@ export default function TeacherHomeworkPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ grade: Number(g.grade), feedback: g.feedback || undefined }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Submission reviewed", variant: "success" });
       if (subsFor) openSubmissions(subsFor);

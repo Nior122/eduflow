@@ -69,7 +69,7 @@ export default function AuditPage() {
       if (to) params.set("to", to);
       if (search) params.set("search", search);
       const res = await fetch(`/api/finance/audit?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setLogs(data.logs ?? []);
     } finally {
       setLoading(false);

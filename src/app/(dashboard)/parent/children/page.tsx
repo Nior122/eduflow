@@ -16,7 +16,7 @@ export default function ParentChildrenPage() {
 
   useEffect(() => {
     fetch("/api/parent/children")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setChildren(d?.children ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));

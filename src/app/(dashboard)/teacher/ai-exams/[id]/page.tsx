@@ -40,7 +40,7 @@ export default function AiExamPrintPage() {
 
   useEffect(() => {
     fetch(`/api/ai/exams/${params.id}`)
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setExam(d.exam ?? null))
       .catch(() => {})
       .finally(() => setLoading(false));

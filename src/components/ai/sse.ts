@@ -24,7 +24,7 @@ export async function consumeSse(
     signal,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
+    const data = await parseJsonBody(res).catch(() => null);
     throw new Error(data?.error ?? `Request failed (${res.status})`);
   }
   if (!res.body) throw new Error("No response body");

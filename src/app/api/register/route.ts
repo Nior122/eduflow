@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "New registrations are currently paused" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(registerSchoolSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

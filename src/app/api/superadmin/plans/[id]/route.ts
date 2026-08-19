@@ -15,7 +15,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const data: Record<string, unknown> = {};
   if (typeof body?.name === "string") data.name = body.name;
   if (typeof body?.description === "string") data.description = body.description;

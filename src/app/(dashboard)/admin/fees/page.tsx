@@ -149,7 +149,7 @@ export default function FeesPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Fee updated" : "Fee created", variant: "success" });
       setDialogOpen(false);
@@ -165,7 +165,7 @@ export default function FeesPage() {
   const handleDelete = async (fee: Fee) => {
     try {
       const res = await fetch(`/api/admin/fees/${fee.id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Fee deleted", variant: "success" });
       load();
@@ -189,7 +189,7 @@ export default function FeesPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(categoryForm),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editingCategory ? "Category updated" : "Category created", variant: "success" });
       setCategoryDialog(false);
@@ -205,7 +205,7 @@ export default function FeesPage() {
   const deleteCategory = async (cat: FeeCategory) => {
     try {
       const res = await fetch(`/api/finance/categories?id=${cat.id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Category deleted", variant: "success" });
       load();
@@ -229,7 +229,7 @@ export default function FeesPage() {
           method: payForm.method,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Payment recorded", variant: "success" });
       setPayFor(null);

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SUPER_ADMIN"] });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const code = typeof body?.code === "string" ? body.code.toUpperCase().trim() : null;
   if (!code || !/^[A-Z0-9_-]{3,32}$/.test(code)) {
     return NextResponse.json({ error: "code must be 3-32 chars (A-Z, 0-9, _ or -)" }, { status: 400 });

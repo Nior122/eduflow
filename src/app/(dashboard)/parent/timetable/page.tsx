@@ -21,7 +21,7 @@ export default function ParentTimetablePage() {
     setDataLoading(true);
     try {
       const res = await fetch(`/api/parent/${childId}/timetable`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (res.ok) setData(d);
     } catch {
       /* ignore */

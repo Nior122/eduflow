@@ -58,7 +58,7 @@ export function ActivityUI() {
     try {
       const offset = reset ? 0 : logs.length;
       const res = await fetch(`/api/activity?limit=${PAGE_SIZE}&offset=${offset}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (res.ok && data?.logs) {
         setLogs((prev) => (reset ? data.logs : [...prev, ...data.logs]));
         setTotal(data.total ?? 0);

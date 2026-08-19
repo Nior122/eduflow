@@ -14,7 +14,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const existing = await prisma.examination.findFirst({ where: { id, schoolId } });
     if (!existing) return NextResponse.json({ error: "Examination not found" }, { status: 404 });
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(examinationUpdateSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

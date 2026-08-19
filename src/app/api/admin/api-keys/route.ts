@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SCHOOL_ADMIN"], schoolScoped: true });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const name = typeof body?.name === "string" && body.name.trim() ? body.name.trim() : null;
   if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
 

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SCHOOL_ADMIN"], schoolScoped: true });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const subject = typeof body?.subject === "string" && body.subject.trim() ? body.subject.trim() : null;
   const description =
     typeof body?.description === "string" && body.description.trim() ? body.description.trim() : null;

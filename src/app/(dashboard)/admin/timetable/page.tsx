@@ -90,7 +90,7 @@ export default function AdminTimetablePage() {
           classroomId: formData.classroomId || null,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Lesson scheduled", variant: "success" });
       setDialogOpen(false);

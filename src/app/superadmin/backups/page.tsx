@@ -39,7 +39,7 @@ export default function BackupsPage() {
 
   const load = () =>
     fetch("/api/superadmin/backups")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setJobs(d.jobs ?? []))
       .catch(() => toast({ title: "Failed to load backups", variant: "destructive" }));
 

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   if (guard instanceof NextResponse) return guard;
   const { schoolId, userId } = guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const includeSummary = body?.includeSummary !== false;
 
   const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 86400000);

@@ -71,8 +71,8 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/billing/subscription").then((r) => r.json()),
-      fetch("/api/billing/usage").then((r) => r.json()),
+      fetch("/api/billing/subscription").then((r) => parseJsonBody(r)),
+      fetch("/api/billing/usage").then((r) => parseJsonBody(r)),
     ])
       .then(([d, u]) => {
         setData(d);
@@ -90,7 +90,7 @@ export default function SubscriptionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planCode, cycle, couponCode }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error ?? "Checkout failed");
       window.location.href = d.checkoutUrl;
     } catch (e) {

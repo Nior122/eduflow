@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SCHOOL_ADMIN"], schoolScoped: true });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const url = typeof body?.url === "string" ? body.url.trim() : null;
   if (!url || !/^https:\/\//.test(url)) {
     return NextResponse.json({ error: "url must be an https URL" }, { status: 400 });

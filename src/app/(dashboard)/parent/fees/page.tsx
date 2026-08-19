@@ -37,7 +37,7 @@ export default function ParentFeesPage() {
     setDataLoading(true);
     try {
       const res = await fetch(`/api/parent/${childId}/fees`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (res.ok) setData(d);
     } catch {
       /* ignore */

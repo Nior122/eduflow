@@ -77,7 +77,7 @@ export default function SubjectsPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Subject updated" : "Subject created", variant: "success" });
       setDialogOpen(false);

@@ -42,7 +42,7 @@ export default function RegisterPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await parseJsonBody(res);
         throw new Error(data.error || "Registration failed");
       }
 

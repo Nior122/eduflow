@@ -31,7 +31,7 @@ export default function StudentReportCardPage() {
 
   useEffect(() => {
     fetch("/api/student/report-card")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => d && setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));

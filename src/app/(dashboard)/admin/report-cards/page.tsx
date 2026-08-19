@@ -50,8 +50,8 @@ export default function ReportCardsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
     ]).then(([s, c]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -69,7 +69,7 @@ export default function ReportCardsPage() {
       const params = new URLSearchParams({ sessionId, termId });
       if (classId) params.set("classId", classId);
       const res = await fetch(`/api/report-cards?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setCards(data.reportCards ?? []);
     } finally {
       setLoading(false);
@@ -85,7 +85,7 @@ export default function ReportCardsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, termId, classId: classId || undefined }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Generation failed");
       toast({ title: `Generated ${data.generated} report card(s)` });
       load();
@@ -114,7 +114,7 @@ export default function ReportCardsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Save failed");
       toast({ title: "Comments saved" });
       setCommentCard(null);
@@ -133,7 +133,7 @@ export default function ReportCardsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPublished: !card.isPublished }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Update failed");
       toast({ title: card.isPublished ? "Report card unpublished" : "Report card published" });
       load();

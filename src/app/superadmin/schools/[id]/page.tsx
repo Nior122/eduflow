@@ -64,7 +64,7 @@ export default function SchoolDetailPage() {
 
   const load = () =>
     fetch(`/api/superadmin/schools/${params.id}`)
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         setData(d);
         setPlanId(d.school.subscription?.plan.id ?? "");
@@ -73,7 +73,7 @@ export default function SchoolDetailPage() {
   useEffect(() => {
     load().catch(() => toast({ title: "Failed to load school", variant: "destructive" }));
     fetch("/api/superadmin/plans")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setPlans(d.plans ?? []))
       .catch(() => {});
   }, [params.id]);

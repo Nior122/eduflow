@@ -46,7 +46,7 @@ export default function SchoolsPage() {
   const load = (p = page, q = search) => {
     setLoading(true);
     fetch(`/api/superadmin/schools?page=${p}&pageSize=25&search=${encodeURIComponent(q)}`)
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         setRows(d.data ?? []);
         setTotal(d.meta?.total ?? 0);

@@ -18,7 +18,7 @@ export default function StudentCalendarPage() {
 
   useEffect(() => {
     fetch("/api/student/calendar")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => d && setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));

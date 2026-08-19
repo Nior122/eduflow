@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
   });
   if (!prompt) return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const variables = (body?.variables ?? {}) as Record<string, string>;
   let content = prompt.content;
   for (const [k, v] of Object.entries(variables)) {

@@ -59,7 +59,7 @@ export async function PATCH(req: Request) {
   const guard = await apiGuard({ roles: ["SUPER_ADMIN"] });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const id = typeof body?.id === "string" ? body.id : null;
   const status = body?.status;
   if (!id || (status !== "ACTIVE" && status !== "SUSPENDED")) {

@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
   if (!existing) return NextResponse.json({ error: "Category not found" }, { status: 404 });
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(libraryCategorySchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

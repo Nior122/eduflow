@@ -55,7 +55,7 @@ export default function AdminAiSettingsPage() {
 
   useEffect(() => {
     fetch("/api/ai/settings")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => {
         setProviders(d.providers ?? []);
         setSettings(d.settings ?? null);

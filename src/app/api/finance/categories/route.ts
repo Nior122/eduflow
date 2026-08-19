@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const schoolId = g.schoolId!;
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(feeCategorySchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
@@ -54,7 +54,7 @@ export async function PATCH(req: Request) {
   if (g.denied) return g.denied;
   const schoolId = g.schoolId!;
 
-  const body = await req.json();
+  const body = await parseJsonBody(req);
   const id = body?.id as string | undefined;
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 

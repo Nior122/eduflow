@@ -77,7 +77,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
   const userId = session!.user!.id;
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   if (!body || body.read !== true) {
     return NextResponse.json({ error: "Only read-marking is supported" }, { status: 400 });
   }

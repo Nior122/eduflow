@@ -36,7 +36,7 @@ export default function WebhooksPage() {
 
   const load = () =>
     fetch("/api/admin/webhooks")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setEndpoints(d.endpoints ?? []));
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function WebhooksPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, secret: secret || undefined, events }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error ?? "Create failed");
       setUrl("");
       setSecret("");

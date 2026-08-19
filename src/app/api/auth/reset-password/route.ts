@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = validate(resetPasswordSchema, body);
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

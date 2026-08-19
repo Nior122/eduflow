@@ -64,8 +64,8 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
     ]).then(([s, c]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -85,14 +85,14 @@ export default function AnalyticsPage() {
           fetch(`/api/analytics?classId=${classId}&sessionId=${sessionId}&termId=${termId}`),
           fetch(`/api/analytics?classId=${classId}`),
         ]);
-        const aData = await aRes.json();
-        const tData = await tRes.json();
+        const aData = await parseJsonBody(aRes);
+        const tData = await parseJsonBody(tRes);
         setAnalytics(aData.analytics ?? null);
         setTrend(tData.trend ?? []);
         setSchool(null);
       } else {
         const res = await fetch(`/api/analytics?sessionId=${sessionId}&termId=${termId}`);
-        const data = await res.json();
+        const data = await parseJsonBody(res);
         setSchool(data.analytics ?? null);
         setAnalytics(null);
         setTrend([]);

@@ -17,7 +17,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
   const doc = await prisma.knowledgeBaseDocument.findFirst({ where: { id, schoolId }, select: { id: true } });
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const data: { title?: string; description?: string | null; isActive?: boolean } = {};
   if (typeof body?.title === "string" && body.title.trim()) data.title = body.title.trim();
   if (typeof body?.description === "string") data.description = body.description;

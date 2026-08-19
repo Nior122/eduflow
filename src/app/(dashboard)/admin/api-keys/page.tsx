@@ -35,7 +35,7 @@ export default function ApiKeysPage() {
 
   const load = () =>
     fetch("/api/admin/api-keys")
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setKeys(d.keys ?? []));
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function ApiKeysPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim() }),
       });
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (!res.ok) throw new Error(d.error ?? "Create failed");
       setCreated(d);
       setName("");

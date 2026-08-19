@@ -17,7 +17,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   });
   if (!existing) return NextResponse.json({ error: "Endpoint not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   await prisma.webhookEndpoint.update({
     where: { id },
     data: {

@@ -54,8 +54,8 @@ export default function AssessmentConfigPage() {
         fetch(`/api/assessment-types${selectedTerm ? `?termId=${selectedTerm}` : ""}`),
         fetch("/api/admin/terms"),
       ]);
-      const typeData = await typeRes.json();
-      const termData = await termRes.json();
+      const typeData = await parseJsonBody(typeRes);
+      const termData = await parseJsonBody(termRes);
       setTypes(typeData.assessmentTypes ?? []);
       setTerms(termData.terms ?? []);
       if (termData.terms?.[0] && !selectedTerm) {
@@ -81,7 +81,7 @@ export default function AssessmentConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save");
       toast({ title: editingId ? "Assessment type updated" : "Assessment type created" });
       setDialogOpen(false);
@@ -107,7 +107,7 @@ export default function AssessmentConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ termId: selectedTerm, items }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to save term config");
       toast({ title: "Term assessment config saved" });
       load();
@@ -121,7 +121,7 @@ export default function AssessmentConfigPage() {
   const remove = async (t: AssessmentType) => {
     try {
       const res = await fetch(`/api/assessment-types/${t.id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Delete failed");
       toast({ title: "Assessment type deleted" });
       load();

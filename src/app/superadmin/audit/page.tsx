@@ -42,7 +42,7 @@ export default function AuditPage() {
   const load = (c = category) => {
     setLoading(true);
     fetch(`/api/superadmin/audit?category=${c}&pageSize=100`)
-      .then((r) => r.json())
+      .then((r) => parseJsonBody(r))
       .then((d) => setRows(d.data ?? []))
       .catch(() => toast({ title: "Failed to load audit log", variant: "destructive" }))
       .finally(() => setLoading(false));

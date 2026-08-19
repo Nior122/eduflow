@@ -65,8 +65,8 @@ export default function TeacherScoresPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/teacher/my-classes").then((r) => r.json()),
-      fetch("/api/admin/sessions").then((r) => r.json()),
+      fetch("/api/teacher/my-classes").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
     ]).then(([c, s]) => {
       setMyClasses(c.classes ?? []);
       setSessions(s.sessions ?? []);
@@ -84,7 +84,7 @@ export default function TeacherScoresPage() {
     try {
       const params = new URLSearchParams({ classId, subjectId, sessionId, termId });
       const res = await fetch(`/api/scores?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to load");
 
       setStudents(data.students ?? []);
@@ -140,7 +140,7 @@ export default function TeacherScoresPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classId, subjectId, sessionId, termId, rows }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Save failed");
       if (data.errors?.length) {
         toast({ title: `Saved ${data.saved} score(s) with ${data.errors.length} rejection(s)`, variant: "destructive" });
@@ -166,7 +166,7 @@ export default function TeacherScoresPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classId, subjectId, sessionId, termId }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Recalculate failed");
       toast({
         title: `Computed ${data.computed} result(s)${data.missingScores ? `, ${data.missingScores} student(s) without scores skipped` : ""}`,

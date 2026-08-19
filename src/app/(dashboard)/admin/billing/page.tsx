@@ -71,11 +71,11 @@ export default function BillingPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/sessions").then((r) => r.json()),
-      fetch("/api/admin/classes").then((r) => r.json()),
-      fetch("/api/admin/fees").then((r) => r.json()),
-      fetch("/api/finance/discounts").then((r) => r.json()),
-      fetch("/api/admin/students?limit=200").then((r) => r.json()),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/classes").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/fees").then((r) => parseJsonBody(r)),
+      fetch("/api/finance/discounts").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/students?limit=200").then((r) => parseJsonBody(r)),
     ]).then(([s, c, f, d, st]) => {
       setSessions(s.sessions ?? []);
       setClasses(c.classes ?? []);
@@ -99,7 +99,7 @@ export default function BillingPage() {
       if (statusFilter) params.set("status", statusFilter);
       if (search) params.set("search", search);
       const res = await fetch(`/api/finance/invoices?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setInvoices(data.invoices ?? []);
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ export default function BillingPage() {
           dueDate: dueDate || null,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Billing failed");
       toast({ title: `Generated ${data.generated} invoice(s)${data.skipped ? ` · ${data.skipped} skipped (already billed)` : ""}` });
       loadInvoices();
@@ -151,7 +151,7 @@ export default function BillingPage() {
           termId: termId || undefined,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: `Draft invoice ${data.invoice.invoiceNumber} created — issue it when ready` });
       setManualOpen(false);
@@ -167,7 +167,7 @@ export default function BillingPage() {
   const invoiceAction = async (id: string, path: string, successMsg: string) => {
     try {
       const res = await fetch(`/api/finance/invoices/${id}/${path}`, { method: "POST" });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Action failed");
       toast({ title: successMsg });
       loadInvoices();

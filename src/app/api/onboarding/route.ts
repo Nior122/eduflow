@@ -26,7 +26,7 @@ export async function PUT(req: Request) {
   const guard = await apiGuard({ roles: ["SCHOOL_ADMIN"], schoolScoped: true });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const step = Number(body?.step);
   const data = (body?.data ?? {}) as Record<string, unknown>;
   if (!Number.isInteger(step) || step < 1 || step > 6) {

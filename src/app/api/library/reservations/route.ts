@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   const userId = session?.user?.id;
   if (!schoolId || !userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(libraryReservationSchema, body);
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

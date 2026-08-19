@@ -107,7 +107,7 @@ export default function TeacherAssignmentsPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: editing ? "Assignment updated" : "Assignment created", variant: "success" });
       setDialogOpen(false);
@@ -139,7 +139,7 @@ export default function TeacherAssignmentsPage() {
     try {
       const res = await fetch(`/api/assignments/${a.id}/submissions`);
       if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       setSubs(data.submissions ?? []);
       const g: Record<string, { grade: string; feedback: string }> = {};
       (data.submissions ?? []).forEach((s: Submission) => {
@@ -163,7 +163,7 @@ export default function TeacherAssignmentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ grade: Number(g.grade), feedback: g.feedback || undefined }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Submission graded", variant: "success" });
       if (subsFor) openSubmissions(subsFor);

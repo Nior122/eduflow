@@ -52,8 +52,8 @@ export default function TeacherResultsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/teacher/my-classes").then((r) => r.json()),
-      fetch("/api/admin/sessions").then((r) => r.json()),
+      fetch("/api/teacher/my-classes").then((r) => parseJsonBody(r)),
+      fetch("/api/admin/sessions").then((r) => parseJsonBody(r)),
     ]).then(([c, s]) => {
       setMyClasses(c.classes ?? []);
       setSessions(s.sessions ?? []);
@@ -71,7 +71,7 @@ export default function TeacherResultsPage() {
     try {
       const params = new URLSearchParams({ classId, subjectId, sessionId, termId });
       const res = await fetch(`/api/results/result-sheet?${params}`);
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setMeta(data.meta ?? null);
       setRows(data.results ?? []);
@@ -95,7 +95,7 @@ export default function TeacherResultsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resultIds: draftIds, action: "SUBMIT" }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Submit failed");
       toast({ title: `Submitted ${data.moved} result(s) for approval` });
       load();

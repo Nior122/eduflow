@@ -72,7 +72,7 @@ export default function ParentSchoolworkPage() {
     setDataLoading(true);
     try {
       const res = await fetch(`/api/parent/${childId}/schoolwork`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (res.ok) setData(d);
     } catch {
       /* ignore */

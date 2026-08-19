@@ -27,7 +27,7 @@ export default function ParentAttendancePage() {
     setDataLoading(true);
     try {
       const res = await fetch(`/api/parent/${childId}/attendance`);
-      const d = await res.json();
+      const d = await parseJsonBody(res);
       if (res.ok) setData(d);
     } catch {
       /* ignore */

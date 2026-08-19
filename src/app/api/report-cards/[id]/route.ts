@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Report card not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const body = await parseJsonBody(req);
   const parsed = validate(reportCardUpdateSchema, body);
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const guard = await apiGuard({ roles: ["SCHOOL_ADMIN"], schoolScoped: true });
   if (guard instanceof NextResponse) return guard;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const invites = Array.isArray(body?.invites) ? body.invites : [];
   if (invites.length === 0 || invites.length > MAX_INVITES) {
     return NextResponse.json({ error: `Provide between 1 and ${MAX_INVITES} invites` }, { status: 400 });

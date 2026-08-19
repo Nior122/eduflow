@@ -50,7 +50,7 @@ export async function PATCH(req: Request) {
   if (denied) return denied;
   const userId = session!.user!.id;
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req).catch(() => null);
   const parsed = validate(notificationMarkSchema, body ?? {});
   if (!parsed.ok) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });

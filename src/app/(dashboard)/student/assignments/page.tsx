@@ -52,7 +52,7 @@ export default function StudentAssignmentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
-      const data = await res.json();
+      const data = await parseJsonBody(res);
       if (!res.ok) throw new Error(data.error || "Failed");
       toast({ title: "Assignment submitted", variant: "success" });
       setSubmitFor(null);

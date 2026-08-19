@@ -30,7 +30,7 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      toast({ title: "Login failed", description: "Invalid email or password.", variant: "destructive" });
+      toast({ title: "Login failed", description: "Invalid email or password. Please try again.", variant: "destructive" });
       setIsLoading(false);
       return;
     }
@@ -89,9 +89,12 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-4 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-              <p className="font-medium mb-1">Demo Credentials:</p>
-              <p>Admin: admin@eduflow.com / password123</p>
-              <p>Teacher: teacher@eduflow.com / password123</p>
+              <p className="font-medium mb-1">Demo Accounts:</p>
+              <p>Admin: demo.admin@eduflow.demo</p>
+              <p>Teacher: demo.teacher@eduflow.demo</p>
+              <p>Parent: demo.parent@eduflow.demo</p>
+              <p>Student: demo.student@eduflow.demo</p>
+              <p className="mt-1">Password: printed by the demo seed and documented in <span className="font-mono">docs/DEMO.md</span> — not displayed here for security.</p>
             </div>
           </CardContent>
         </Card>
