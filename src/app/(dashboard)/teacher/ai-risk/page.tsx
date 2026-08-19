@@ -63,9 +63,9 @@ export default function TeacherAiRiskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, save }),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       setResult(data);
       if (data.saved) toast({ title: "Analysis saved to the student's profile", variant: "success" });

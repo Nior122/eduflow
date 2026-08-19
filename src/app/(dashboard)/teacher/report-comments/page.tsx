@@ -53,9 +53,9 @@ export default function ReportCommentsPage() {
       const res = await fetch("/api/ai/report-comment", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       setComment(data.comment);
     } catch (err) {
@@ -78,9 +78,9 @@ export default function ReportCommentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId: form.studentId, comment: text }),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       toast({ title: "Comment saved", variant: "success" });
       setEditing(false);

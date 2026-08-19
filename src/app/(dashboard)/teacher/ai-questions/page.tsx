@@ -65,9 +65,9 @@ export default function TeacherAiQuestionsPage() {
       const params = new URLSearchParams();
       if (bankQ.trim()) params.set("q", bankQ.trim());
       const res = await fetch(`/api/ai/questions?${params.toString()}`);
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (res.ok) setBank(data?.questions ?? []);
     } catch {
       /* ignore */
@@ -91,9 +91,9 @@ export default function TeacherAiQuestionsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject: subject.trim(), className: className.trim() || undefined, topic: topic.trim(), difficulty, count: Number(count) || 8, types }),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       setGenerated(data.questions ?? []);
       toast({ title: `${data.count ?? 0} questions generated & saved to the bank`, variant: "success" });

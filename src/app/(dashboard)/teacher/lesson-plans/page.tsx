@@ -57,9 +57,9 @@ export default function LessonPlansPage() {
       const res = await fetch("/api/ai/lesson-plan", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       setPlan(data.plan);
     } catch {
@@ -91,9 +91,9 @@ export default function LessonPlansPage() {
           homework: plan.homework ?? "",
         }),
       });
-      const text = await res.text();
+      const bodyText = await res.text();
       let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
       if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
       toast({ title: "Lesson plan saved", variant: "success" });
       loadSaved();
