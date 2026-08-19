@@ -13,9 +13,9 @@ import { computeStudentMetrics, getScopedStudent, riskScoreFromMetrics } from "@
  * narrative over those facts. Optionally saves a PerformanceAnalysis row.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "risk_prediction" });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "risk_prediction" });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);

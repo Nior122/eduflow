@@ -20,9 +20,9 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
  * and streams the summary or a document-grounded answer over SSE.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "document_assistant", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "document_assistant", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId, config } = guard;
   
     let form: FormData;
@@ -119,9 +119,9 @@ async function* attachMeta(
 
 /** GET /api/ai/documents — knowledge-base document list (staff). */
 export async function GET() {
-  const guard = await aiGuard({ module: "document_assistant", roles: STAFF_ROLES, budgetCheck: false });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "document_assistant", roles: STAFF_ROLES, budgetCheck: false });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId } = guard;
   
     const docs = await prisma.knowledgeBaseDocument.findMany({

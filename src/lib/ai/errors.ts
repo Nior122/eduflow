@@ -29,5 +29,8 @@ export function friendlyAiError(error: unknown): string {
  */
 export function aiErrorResponse(error: unknown, fallback = "AI request failed"): NextResponse {
   const message = friendlyAiError(error) || fallback;
+  // Server-side visibility (Vercel function logs). Never logs keys/secrets.
+  if (error instanceof Error) console.error("[ai] route error:", message, "|", error.message);
+  else console.error("[ai] route error:", message, error);
   return NextResponse.json({ error: message }, { status: 502 });
 }

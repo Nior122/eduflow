@@ -14,9 +14,9 @@ import { aiErrorResponse } from "@/lib/ai/errors";
  * are persisted automatically (title + messages) when the stream finishes.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "assistant" });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "assistant" });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId, config } = guard;
   
     const body = await req.json().catch(() => null);

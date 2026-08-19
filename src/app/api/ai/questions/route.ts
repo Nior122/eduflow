@@ -22,9 +22,9 @@ const num = (v: unknown, d = 1) => {
  * and returns them for editing/export.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "question_generator", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "question_generator", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);
@@ -100,9 +100,9 @@ export async function POST(req: Request) {
 
 /** GET /api/ai/questions — saved question bank with filters. */
 export async function GET(req: Request) {
-  const guard = await aiGuard({ module: "question_generator", roles: STAFF_ROLES, budgetCheck: false });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "question_generator", roles: STAFF_ROLES, budgetCheck: false });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId } = guard;
   
     const url = new URL(req.url);

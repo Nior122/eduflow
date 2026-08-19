@@ -59,7 +59,11 @@ export default function TeacherAiExamsPage() {
       const bodyText = await res.text();
       let data: any = null;
       try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
-      if (!res.ok) throw new Error((data && typeof data.error === "string" && data.error) || `AI request failed (${res.status})`);
+      if (!res.ok) {
+        const serverMsg = data && (typeof data.error === "string" ? data.error : typeof data.message === "string" ? data.message : "");
+        const detail = bodyText && !serverMsg ? `: ${bodyText.slice(0, 200)}` : "";
+        throw new Error(serverMsg || `AI request failed (${res.status})${detail}`);
+      }
       toast({ title: "Exam generated", variant: "success" });
       setExams((prev) => [data.exam, ...prev]);
     } catch (err) {

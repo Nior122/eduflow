@@ -14,9 +14,9 @@ const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
  * previous comments are passed along so the model does not repeat them.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "report_comment", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "report_comment", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);

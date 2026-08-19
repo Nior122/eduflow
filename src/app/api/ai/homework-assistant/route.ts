@@ -14,9 +14,9 @@ const ROLES: UserRole[] = ["STUDENT", "TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
  * is disabled in AI settings.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "homework_assistant", roles: ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "homework_assistant", roles: ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId, userId, config } = guard;
   
     const body = await req.json().catch(() => null);

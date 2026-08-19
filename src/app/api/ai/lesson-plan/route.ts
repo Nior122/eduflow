@@ -15,9 +15,9 @@ const str = (v: unknown, d = "") => (typeof v === "string" ? v : d);
  * keeps working) plus extensionActivities.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "lesson_planner", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "lesson_planner", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);

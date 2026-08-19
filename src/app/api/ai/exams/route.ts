@@ -16,9 +16,9 @@ const str = (v: unknown, d = "") => (typeof v === "string" && v.trim() ? v.trim(
  * answer key, difficulty coverage) and persists it as GeneratedExam.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "exam_generator", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "exam_generator", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);
@@ -78,9 +78,9 @@ export async function POST(req: Request) {
 
 /** GET /api/ai/exams — generated exams list. */
 export async function GET() {
-  const guard = await aiGuard({ module: "exam_generator", roles: STAFF_ROLES, budgetCheck: false });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "exam_generator", roles: STAFF_ROLES, budgetCheck: false });
+    if (guard instanceof NextResponse) return guard;
     const { schoolId } = guard;
   
     const exams = await prisma.generatedExam.findMany({

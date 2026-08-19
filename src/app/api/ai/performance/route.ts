@@ -12,9 +12,9 @@ import { computeStudentMetrics, getScopedStudent } from "@/lib/ai/metrics";
  * improvement plan. Students/parents see their own/children's data only.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "performance_analyzer" });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "performance_analyzer" });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);

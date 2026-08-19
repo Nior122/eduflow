@@ -15,9 +15,9 @@ const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
  * message to the parent via the internal messaging system + notification.
  */
 export async function POST(req: Request) {
-  const guard = await aiGuard({ module: "parent_communication", roles: STAFF_ROLES });
-  if (guard instanceof NextResponse) return guard;
   try {
+    const guard = await aiGuard({ module: "parent_communication", roles: STAFF_ROLES });
+    if (guard instanceof NextResponse) return guard;
     const { session, schoolId, userId } = guard;
   
     const body = await req.json().catch(() => null);

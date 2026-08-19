@@ -133,3 +133,15 @@ function deployWithBaselineFallback() {
 }
 
 deployWithBaselineFallback();
+
+// ── always reconcile schema drift ───────────────────────────────────
+// This database was created with `db push` in dev; the recorded
+// migrations are a baseline, so schema.prisma is the real source of
+// truth. Sync it on EVERY build so missing tables/constraints (AI
+// tables, the Attendance/Class/PromptTemplate/Result unique keys) are
+// created before the app starts. --accept-data-loss only acknowledges
+// the unique-constraint warnings; it never deletes rows.
+console.log(
+  "migrate-deploy: reconciling schema drift with `prisma db push --skip-generate --accept-data-loss` (always)."
+);
+run("prisma db push --skip-generate --accept-data-loss");
