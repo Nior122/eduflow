@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChildSelect } from "@/components/portal/child-select";
 import { useChildren } from "@/hooks/use-children";
 import { formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ReportCardData = {
   child: { firstName: string; lastName: string; className: string | null };

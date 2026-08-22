@@ -5,6 +5,7 @@ import { staffGuard, assertTeacherAssignment } from "@/lib/exams/guards";
 import { upsertComputedResult } from "@/lib/exams/calculator";
 import { recomputePositions } from "@/lib/exams/positions";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/scores/recalculate — recompute Result rows (weighted totals,

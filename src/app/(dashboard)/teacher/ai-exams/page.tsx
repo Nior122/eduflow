@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ExamMeta = {
   id: string;

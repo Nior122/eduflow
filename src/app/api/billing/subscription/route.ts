@@ -4,6 +4,7 @@ import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
 import { defaultBillingProvider, getBillingProvider } from "@/lib/saas/billing/provider";
 import { applyCoupon } from "@/lib/saas/billing/service";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/billing/subscription — current subscription + plan + usage.

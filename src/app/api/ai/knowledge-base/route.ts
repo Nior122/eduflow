@@ -4,6 +4,7 @@ import { extractText } from "@/lib/ai/extract";
 import { chunkText } from "@/lib/ai/rag";
 import { aiGuard } from "@/lib/ai/guard";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 const VIEWER_ROLES: UserRole[] = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"];

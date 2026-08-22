@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Coupon = {
   id: string;

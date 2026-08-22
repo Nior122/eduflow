@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, assessmentTypeSchema, assessmentTypeUpdateSchema } from "@/lib/validations";
 import { adminGuard } from "@/lib/exams/guards";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function GET(req: Request) {
   const g = await adminGuard();

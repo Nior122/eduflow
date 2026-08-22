@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export type NotificationItem = {
   id: string;

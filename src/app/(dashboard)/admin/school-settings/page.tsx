@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { School, Loader2, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type School = {
   id: string;

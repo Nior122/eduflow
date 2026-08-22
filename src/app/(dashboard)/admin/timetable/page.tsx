@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type TimetableEntry = {
   id: string;

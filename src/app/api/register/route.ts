@@ -8,6 +8,7 @@ import { rateLimit, ipKey } from "@/lib/rate-limit";
 import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/saas/audit";
 import { sendSaaSEmail } from "@/lib/saas/email/send";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

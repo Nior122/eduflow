@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Provider = { id: string; label: string; defaultModel: string; configured: boolean };
 type SettingsData = {

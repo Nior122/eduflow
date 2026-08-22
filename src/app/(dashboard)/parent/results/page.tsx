@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, User } from "lucide-react";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ChildCard = {
   id: string;

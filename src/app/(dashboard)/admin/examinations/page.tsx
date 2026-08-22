@@ -16,6 +16,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Plus, Loader2, Copy, Archive, Rocket, Pencil, Trash2, CalendarClock } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Examination = {
   id: string;

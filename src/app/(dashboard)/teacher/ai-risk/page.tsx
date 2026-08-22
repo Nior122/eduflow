@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Student = { id: string; name: string; admissionNumber: string; className: string | null; attendanceRate: number | null; averageScore: number | null };
 type Metrics = {

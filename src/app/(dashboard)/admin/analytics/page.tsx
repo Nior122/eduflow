@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { BarChart3, TrendingUp, Trophy, AlertTriangle } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };
 type ClassRow = { id: string; name: string };

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
 import { queueWebhookEvent } from "@/lib/saas/webhooks";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/admin/webhooks — list endpoints.

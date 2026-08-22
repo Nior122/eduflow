@@ -18,6 +18,7 @@ import { Plus, ClipboardList, Pencil, Trash2, Loader2, CheckCircle2 } from "luci
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Assignment = {
   id: string;

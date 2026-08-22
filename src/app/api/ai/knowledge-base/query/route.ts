@@ -6,6 +6,7 @@ import type { AiStreamEvent } from "@/lib/ai/types";
 import { aiGuard } from "@/lib/ai/guard";
 import { mergePassages, scoreChunks } from "@/lib/ai/rag";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const VIEWER_ROLES: UserRole[] = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"];
 

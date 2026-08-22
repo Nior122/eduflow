@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, getAttendanceColor } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type AttendanceData = {
   rate: number;

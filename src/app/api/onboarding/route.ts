@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
 import { sendSaaSEmail } from "@/lib/saas/email/send";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STEP_1_FIELDS = [
   "name",

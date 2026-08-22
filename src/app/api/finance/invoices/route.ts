@@ -7,6 +7,7 @@ import { nextNumber } from "@/lib/finance/numbers";
 import { money, invoiceDue } from "@/lib/finance/types";
 import { applyDiscountValue, validateDiscountForInvoice } from "@/lib/finance/billing";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/finance/invoices — list with filters.

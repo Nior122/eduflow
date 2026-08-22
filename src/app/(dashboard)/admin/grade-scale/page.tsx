@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Save, RotateCcw, Plus } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Band = {
   name: string;

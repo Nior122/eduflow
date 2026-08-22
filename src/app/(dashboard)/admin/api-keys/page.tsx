@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { KeyRound, Loader2, Copy, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ApiKeyRow = {
   id: string;

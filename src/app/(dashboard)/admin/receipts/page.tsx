@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Printer, ShieldCheck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHOD_LABEL } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ReceiptRow = {
   id: string;

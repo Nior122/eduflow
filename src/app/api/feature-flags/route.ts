@@ -5,6 +5,7 @@ import { getEffectiveModules, setFeatureOverride } from "@/lib/saas/features";
 import { parsePlanFeatures } from "@/lib/saas/plans";
 import { audit } from "@/lib/saas/audit";
 import type { FeatureModule } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/feature-flags — effective modules (plan defaults + overrides).

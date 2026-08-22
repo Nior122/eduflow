@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ChildSelect } from "@/components/portal/child-select";
 import { useChildren } from "@/hooks/use-children";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type FeesData = {
   child: { firstName: string; lastName: string; className: string | null };

@@ -4,6 +4,7 @@ import { validate, feeCategorySchema, feeCategoryUpdateSchema } from "@/lib/vali
 import { financeGuard } from "@/lib/finance/guards";
 import { logFinanceAudit } from "@/lib/finance/audit";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function GET() {
   const g = await financeGuard();

@@ -21,6 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, Eye, Ban, Send, Plus, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { INVOICE_STATUS_LABEL, INVOICE_STATUS_BADGE } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };
 type ClassRow = { id: string; name: string };

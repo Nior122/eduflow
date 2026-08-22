@@ -3,6 +3,7 @@ import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, termSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 const READ_ROLES = ["TEACHER", "SUPER_ADMIN", "SCHOOL_ADMIN"] as const;

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, libraryBookUpdateSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 import { logActivity } from "@/lib/notifications";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const CATALOG_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"] as const;
 const ADMIN_ROLES = ["SCHOOL_ADMIN", "SUPER_ADMIN"] as const;

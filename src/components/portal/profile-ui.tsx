@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ProfileData = {
   user: { id: string; name: string | null; email: string; phone: string | null; image: string | null; role: string };

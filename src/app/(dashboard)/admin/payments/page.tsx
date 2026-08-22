@@ -21,6 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, ReceiptText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHOD_LABEL } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type PaymentRow = {
   id: string;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, submissionSchema } from "@/lib/validations";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STAFF_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 

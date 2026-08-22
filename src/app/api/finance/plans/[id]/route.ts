@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validate, planUpdateSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { updatePlanStatus, PaymentError } from "@/lib/finance/payments";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type RouteCtx = { params: Promise<{ id: string }> };
 

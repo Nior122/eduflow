@@ -7,6 +7,7 @@ import { getScopedStudent } from "@/lib/ai/metrics";
 import { pairKey } from "@/lib/messages";
 import { logActivity, notifyUser } from "@/lib/notifications";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
 

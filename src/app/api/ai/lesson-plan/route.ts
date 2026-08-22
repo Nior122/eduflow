@@ -4,6 +4,7 @@ import { aiComplete, parseJsonLoose, resolvePrompt } from "@/lib/ai/core";
 import { aiGuard } from "@/lib/ai/guard";
 import { aiErrorResponse } from "@/lib/ai/errors";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STAFF_ROLES: UserRole[] = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"];
 

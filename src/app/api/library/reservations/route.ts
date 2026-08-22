@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, libraryReservationSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 import { logActivity, notifyUser } from "@/lib/notifications";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ALL_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"] as const;
 const RESERVATION_DAYS = 7;

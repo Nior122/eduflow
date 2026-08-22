@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { apiGuard } from "@/lib/saas/guard";
 import { generateApiKey } from "@/lib/saas/apikeys";
 import { audit } from "@/lib/saas/audit";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/admin/api-keys — list keys (hashes only, never plaintext).

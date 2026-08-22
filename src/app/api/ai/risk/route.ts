@@ -5,6 +5,7 @@ import { aiComplete, parseJsonLoose, resolvePrompt } from "@/lib/ai/core";
 import { aiGuard } from "@/lib/ai/guard";
 import { aiErrorResponse } from "@/lib/ai/errors";
 import { computeStudentMetrics, getScopedStudent, riskScoreFromMetrics } from "@/lib/ai/metrics";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/ai/risk — AI Student Risk Prediction (Module 8).

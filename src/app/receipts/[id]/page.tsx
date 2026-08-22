@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Printer, ArrowLeft, ShieldCheck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PAYMENT_METHOD_LABEL } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ReceiptData = {
   receipt: { id: string; receiptNumber: string; amount: number; method: string; issuedAt: string; qrCode: string; notes: string | null };

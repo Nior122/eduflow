@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { consumeSse, type SseEvent } from "@/components/ai/sse";
 import { MarkdownText } from "@/components/ai/markdown";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type ConvMeta = { id: string; title: string; updatedAt: string };

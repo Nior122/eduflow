@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Loader2, Save, Pencil, Trash2, Percent } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type AssessmentType = {
   id: string;

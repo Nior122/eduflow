@@ -4,6 +4,7 @@ import { validate, gatewayConfigSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { logFinanceAudit } from "@/lib/finance/audit";
 import { GATEWAY_IDS } from "@/lib/finance/gateway";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** GET /api/finance/gateways — configured gateway rows for the school. */
 export async function GET() {

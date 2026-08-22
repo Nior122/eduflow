@@ -3,6 +3,7 @@ import { validate, aiSettingsTestSchema } from "@/lib/validations";
 import { complete, providerKey, resolveModel } from "@/lib/ai/providers";
 import { aiGuard } from "@/lib/ai/guard";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 

@@ -6,6 +6,7 @@ import { aiGuard } from "@/lib/ai/guard";
 import { AI_PROVIDER_IDS, AI_PROVIDERS, providerKey } from "@/lib/ai/providers";
 import { AI_MODULES } from "@/lib/ai/core";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 

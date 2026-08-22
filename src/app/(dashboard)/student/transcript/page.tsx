@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type TranscriptData = {
   transcript: { lastGeneratedAt: string } | null;

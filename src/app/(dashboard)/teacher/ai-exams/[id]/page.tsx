@@ -6,6 +6,7 @@ import { Printer, Loader2, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ExamSection = {
   name: string;

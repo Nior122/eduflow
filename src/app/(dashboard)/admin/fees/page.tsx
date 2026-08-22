@@ -22,6 +22,7 @@ import { DollarSign, Plus, Pencil, Trash2, Loader2, Tag, TrendingUp } from "luci
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type FeeCategory = { id: string; name: string; code: string | null; color: string | null; _count: { fees: number } };
 type ClassRow = { id: string; name: string };

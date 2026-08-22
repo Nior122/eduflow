@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** PATCH /api/superadmin/tickets/[id] — { status, priority, assignedToId }. */
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {

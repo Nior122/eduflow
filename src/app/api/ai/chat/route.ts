@@ -7,6 +7,7 @@ import { AI_TOOLS } from "@/lib/ai/tools";
 import type { AiMessage, AiStreamEvent } from "@/lib/ai/types";
 import { aiGuard } from "@/lib/ai/guard";
 import { aiErrorResponse } from "@/lib/ai/errors";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/ai/chat — the app-wide AI School Assistant.

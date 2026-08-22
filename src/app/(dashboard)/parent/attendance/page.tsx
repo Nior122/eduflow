@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ChildSelect } from "@/components/portal/child-select";
 import { useChildren } from "@/hooks/use-children";
 import { formatDate, getAttendanceColor } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type AttendanceData = {
   child: { firstName: string; lastName: string; className: string | null };

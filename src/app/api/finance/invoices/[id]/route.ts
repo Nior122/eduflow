@@ -4,6 +4,7 @@ import { validate, invoiceUpdateSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { logFinanceAudit } from "@/lib/finance/audit";
 import { invoiceDue } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type RouteCtx = { params: Promise<{ id: string }> };
 

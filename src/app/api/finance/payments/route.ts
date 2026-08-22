@@ -4,6 +4,7 @@ import { validate, paymentCreateSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { recordPayment, PaymentError } from "@/lib/finance/payments";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/finance/payments — list with filters.

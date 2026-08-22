@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, promptTemplateUpdateSchema } from "@/lib/validations";
 import { aiGuard } from "@/lib/ai/guard";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 

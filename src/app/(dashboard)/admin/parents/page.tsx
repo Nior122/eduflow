@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { getInitials } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CredentialsDialog } from "@/components/credentials-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ParentItem = {
   id: string;

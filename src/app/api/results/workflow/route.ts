@@ -4,6 +4,7 @@ import { validate, workflowSchema } from "@/lib/validations";
 import { staffGuard } from "@/lib/exams/guards";
 import { canTransition, actionFor, ACTION_ROLES, RESULT_STATUSES } from "@/lib/exams/workflow";
 import type { ResultStatus } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ACTION_TO_STATUS: Record<string, ResultStatus> = {
   SUBMIT: "SUBMITTED",

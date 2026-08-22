@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { FileText, BookOpen } from "lucide-react";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type CardRow = {
   id: string;

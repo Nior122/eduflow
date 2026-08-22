@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, discountCreateSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { createDiscount, DiscountError } from "@/lib/finance/discounts";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** GET /api/finance/discounts — list with filters (?status&type&studentId). */
 export async function GET(req: Request) {

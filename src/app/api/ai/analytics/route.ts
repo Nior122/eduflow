@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { aiComplete, parseJsonLoose, resolvePrompt } from "@/lib/ai/core";
 import { aiGuard } from "@/lib/ai/guard";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 const PUBLISHED = ["PUBLISHED", "LOCKED"] as const;

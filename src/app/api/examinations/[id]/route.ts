@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, examinationUpdateSchema } from "@/lib/validations";
 import { adminGuard } from "@/lib/exams/guards";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await adminGuard();

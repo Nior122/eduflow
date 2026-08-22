@@ -4,6 +4,7 @@ import { aiComplete, parseJsonLoose, resolvePrompt } from "@/lib/ai/core";
 import { aiGuard } from "@/lib/ai/guard";
 import { aiErrorResponse } from "@/lib/ai/errors";
 import { computeStudentMetrics, getScopedStudent } from "@/lib/ai/metrics";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/ai/performance — AI Performance Analyzer (Module 4).

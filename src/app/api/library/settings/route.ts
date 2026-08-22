@@ -3,6 +3,7 @@ import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, librarySettingsSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/notifications";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const VIEW_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 const ADMIN_ROLES = ["SCHOOL_ADMIN", "SUPER_ADMIN"] as const;

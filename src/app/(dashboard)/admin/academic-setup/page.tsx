@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarRange, ClipboardCheck, Loader2, Lock, Archive, Play } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = {
   id: string; name: string; startDate: string | null; endDate: string | null;

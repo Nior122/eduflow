@@ -13,6 +13,7 @@ import {
 import { NotebookPen, Loader2, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Homework = {
   id: string;

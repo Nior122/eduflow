@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, libraryReturnSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
 import { logActivity, notifyUser } from "@/lib/notifications";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STAFF_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 

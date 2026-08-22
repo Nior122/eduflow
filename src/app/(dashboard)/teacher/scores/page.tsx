@@ -16,6 +16,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Save, Loader2, RefreshCw, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type MyClass = { classId: string; className: string; subjectId: string; subjectName: string };
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };

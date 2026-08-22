@@ -4,6 +4,7 @@ import { validate, reportCardUpdateSchema } from "@/lib/validations";
 import { auth, requireRole } from "@/lib/auth";
 import { buildReportCard } from "@/lib/exams/report-card";
 import { ADMIN_ROLES, STAFF_ROLES } from "@/lib/exams/guards";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const COMMENT_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 const VIEW_ROLES = ["STUDENT", "PARENT", "TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;

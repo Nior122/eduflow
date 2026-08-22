@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, TrendingUp, GraduationCap, Repeat, Archive, ArrowRightLeft } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };
 

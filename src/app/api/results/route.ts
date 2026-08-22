@@ -3,6 +3,7 @@ import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, resultSchema } from "@/lib/validations";
 import { calculateGrade } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const STAFF_ROLES = ["TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN"] as const;
 

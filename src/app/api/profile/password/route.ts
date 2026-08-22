@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, passwordChangeSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/notifications";
 import { compare, hash } from "bcryptjs";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** POST /api/profile/password — verify the current password and set a new one. */
 export async function POST(req: Request) {

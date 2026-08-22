@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { NotificationIcon, type NotificationItem } from "@/components/portal/notification-drawer";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const PAGE_SIZE = 20;
 

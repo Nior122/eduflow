@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, reportCardGenerateSchema } from "@/lib/validations";
 import { staffGuard } from "@/lib/exams/guards";
 import { buildReportCard } from "@/lib/exams/report-card";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** GET /api/report-cards?classId&sessionId&termId (admin/staff view) */
 export async function GET(req: Request) {

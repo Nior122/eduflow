@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, FileText, Sparkles, Eye } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };
 type ReportCardRow = {

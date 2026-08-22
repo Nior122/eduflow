@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { Wallet, TrendingUp, AlertTriangle, Users, Percent, Clock } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type DashboardData = {
   todayRevenue: number;

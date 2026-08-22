@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validate, discountReviewSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { reviewDiscount, DiscountError } from "@/lib/finance/discounts";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type RouteCtx = { params: Promise<{ id: string }> };
 

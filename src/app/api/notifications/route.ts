@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, notificationMarkSchema } from "@/lib/validations";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const NOTIFICATION_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"] as const;
 

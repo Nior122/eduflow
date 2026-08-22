@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Printer, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type ReportCardData = {
   reportCardId: string;

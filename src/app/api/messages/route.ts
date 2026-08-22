@@ -5,6 +5,7 @@ import { validate, messageSendSchema } from "@/lib/validations";
 import { logActivity, notifyUser } from "@/lib/notifications";
 import { MESSAGE_ROLES, pairKey } from "@/lib/messages";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 
 type ConvItem = {

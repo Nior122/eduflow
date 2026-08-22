@@ -18,6 +18,7 @@ import { Plus, CalendarDays, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type CalendarEvent = {
   id: string;

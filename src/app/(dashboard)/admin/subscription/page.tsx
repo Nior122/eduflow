@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Check, CreditCard, Loader2, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type SubscriptionData = {
   subscription: {

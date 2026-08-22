@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type DashboardData = {
   stats: {

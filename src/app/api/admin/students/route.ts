@@ -6,6 +6,7 @@ import { provisionUser, generateAdmissionNumber } from "@/lib/provision";
 import { Prisma } from "@prisma/client";
 import { checkUsageLimit, recordUsage } from "@/lib/saas/usage";
 import { queueWebhookEvent } from "@/lib/saas/webhooks";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 

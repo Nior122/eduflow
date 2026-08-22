@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Announcement = {
   id: string;

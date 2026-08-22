@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validate, profileUpdateSchema } from "@/lib/validations";
 import { logActivity } from "@/lib/notifications";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const DEFAULT_PREFS = {
   language: "en",

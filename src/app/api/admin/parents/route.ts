@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, parentSchema } from "@/lib/validations";
 import { provisionUser } from "@/lib/provision";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 

@@ -3,6 +3,7 @@ import { validate, gatewayInitSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { initializeGatewayPayment, GatewayError } from "@/lib/finance/gateway";
 import { generateReference } from "@/lib/provision";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/finance/payments/initialize — start an online payment via the

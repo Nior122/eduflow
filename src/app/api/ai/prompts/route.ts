@@ -4,6 +4,7 @@ import { validate, promptTemplateSchema } from "@/lib/validations";
 import { DEFAULT_PROMPTS } from "@/lib/ai/prompts";
 import { aiGuard } from "@/lib/ai/guard";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES: UserRole[] = ["SCHOOL_ADMIN", "SUPER_ADMIN"];
 

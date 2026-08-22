@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildSelect } from "@/components/portal/child-select";
 import { useChildren } from "@/hooks/use-children";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type TimetableData = {
   child: { firstName: string; lastName: string; className: string | null };

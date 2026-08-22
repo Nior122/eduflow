@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validate, gradeBandBulkSchema, gradeBandSchema } from "@/lib/validations";
 import { adminGuard } from "@/lib/exams/guards";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function GET() {
   const g = await adminGuard();

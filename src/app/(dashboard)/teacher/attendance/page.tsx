@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { CalendarDays, Save, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Student = {
   id: string;

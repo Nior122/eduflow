@@ -19,6 +19,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Bell, CalendarClock, CheckCircle2, XCircle, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Session = { id: string; name: string; terms: { id: string; name: string }[] };
 type ClassRow = { id: string; name: string };

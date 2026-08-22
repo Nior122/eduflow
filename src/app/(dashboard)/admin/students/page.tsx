@@ -26,6 +26,7 @@ import { toast } from "@/hooks/use-toast";
 import { getInitials, formatDate } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CredentialsDialog } from "@/components/credentials-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Class = { id: string; name: string; category: string };
 

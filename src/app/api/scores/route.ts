@@ -4,6 +4,7 @@ import { validate, scoreBulkSchema } from "@/lib/validations";
 import { staffGuard, assertTeacherAssignment } from "@/lib/exams/guards";
 import { getEffectiveConfigs } from "@/lib/exams/calculator";
 import { Prisma } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/scores?classId&subjectId&sessionId&termId

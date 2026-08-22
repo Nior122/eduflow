@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, announcementSchema } from "@/lib/validations";
 import { announcementVisibleTo, fanOutAnnouncement, logActivity } from "@/lib/notifications";
 import type { UserRole } from "@prisma/client";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "SCHOOL_ADMIN"] as const;
 const VIEWER_ROLES: UserRole[] = ["SUPER_ADMIN", "SCHOOL_ADMIN", "FINANCE_OFFICER", "TEACHER", "PARENT", "STUDENT"];

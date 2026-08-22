@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validate, billingGenerateSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { generateInvoices } from "@/lib/finance/billing";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * POST /api/finance/billing — bulk invoice generation.

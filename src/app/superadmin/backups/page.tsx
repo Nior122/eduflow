@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, DatabaseBackup } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Backup = {
   id: string;

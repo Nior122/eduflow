@@ -1,3 +1,4 @@
+import { parseJsonBody } from "@/lib/safe-fetch";
 /**
  * EduFlow AI — client-side SSE consumer (Phase 7).
  * Parses the text/event-stream responses produced by the AI routes.

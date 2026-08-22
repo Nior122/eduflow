@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ShieldCheck, Lock } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type GatewayConfig = {
   id: string;

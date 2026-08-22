@@ -13,6 +13,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Search, Printer, ScrollText, Loader2 } from "lucide-react";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type TranscriptData = {
   student: {

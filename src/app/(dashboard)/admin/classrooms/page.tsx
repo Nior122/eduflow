@@ -19,6 +19,7 @@ import {
 import { Plus, DoorOpen, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Classroom = {
   id: string;

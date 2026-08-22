@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Sparkles, BarChart3, ArrowRight, Brain, Loader2, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Analysis = {
   strengths: string[];

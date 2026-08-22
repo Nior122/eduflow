@@ -14,6 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { History, Loader2 } from "lucide-react";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type AuditRow = {
   id: string;

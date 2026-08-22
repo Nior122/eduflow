@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, promotionApplySchema } from "@/lib/validations";
 import { adminGuard } from "@/lib/exams/guards";
 import { applyPromotion, getPromotionCandidates } from "@/lib/exams/promotion";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/promotions?classId&sessionId&termId

@@ -13,6 +13,7 @@ import { consumeSse, type SseEvent } from "@/components/ai/sse";
 import { MarkdownText } from "@/components/ai/markdown";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type DocMeta = { id: string; title: string; sourceType: string; fileName: string | null; uploader: string | null; createdAt: string };
 

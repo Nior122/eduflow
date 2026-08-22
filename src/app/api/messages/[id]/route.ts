@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { MESSAGE_ROLES, pairKey, parseAttachments } from "@/lib/messages";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type RouteCtx = { params: Promise<{ id: string }> };
 

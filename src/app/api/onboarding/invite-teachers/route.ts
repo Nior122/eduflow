@@ -4,6 +4,7 @@ import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
 import { sendSaaSEmail } from "@/lib/saas/email/send";
 import { provisionUser } from "@/lib/provision";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 const MAX_INVITES = 20;
 

@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/tabs";
 import { cn, formatRelativeTime, getInitials } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type Conversation = {
   key: string;

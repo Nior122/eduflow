@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { apiGuard } from "@/lib/saas/guard";
 import { audit } from "@/lib/saas/audit";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /** GET — all coupons. POST — create coupon. */
 export async function GET() {

@@ -16,6 +16,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Send, CheckCheck, Rocket, Lock, Undo2, FileText, RefreshCw } from "lucide-react";
 import { gradeBadgeVariant, gradeColor } from "@/lib/exams/grades";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type SheetResult = {
   id: string;

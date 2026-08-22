@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validate, forgotPasswordSchema } from "@/lib/validations";
 import { sendEmail } from "@/lib/email";
 import { rateLimit, ipKey } from "@/lib/rate-limit";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";

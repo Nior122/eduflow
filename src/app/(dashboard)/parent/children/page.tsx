@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials, formatCurrency } from "@/lib/utils";
 import type { ChildSummary } from "@/hooks/use-children";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 export default function ParentChildrenPage() {
   const [children, setChildren] = useState<ChildSummary[]>([]);

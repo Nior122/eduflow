@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { validate, reminderSchema } from "@/lib/validations";
 import { financeGuard } from "@/lib/finance/guards";
 import { getOutstanding, sendReminders, PaymentError } from "@/lib/finance/payments";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 /**
  * GET /api/finance/outstanding

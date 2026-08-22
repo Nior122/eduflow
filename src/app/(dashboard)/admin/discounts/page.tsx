@@ -21,6 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, CheckCheck, XCircle, Percent } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { DISCOUNT_TYPE_LABEL, DISCOUNT_SCOPE_LABEL } from "@/lib/finance/types";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type StudentRow = { id: string; firstName: string; lastName: string; admissionNumber: string };
 type ClassRow = { id: string; name: string };

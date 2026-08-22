@@ -18,6 +18,7 @@ import {
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { WEBHOOK_EVENTS } from "@/lib/saas/events";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type EndpointRow = {
   id: string;

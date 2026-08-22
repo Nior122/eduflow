@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Download, Save, Loader2, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseJsonBody } from "@/lib/safe-fetch";
 
 type TeacherOption = { id: string; firstName: string; lastName: string; staffId: string | null };
 type StaffRecord = { id: string; teacherId: string; status: string; teacher: { firstName: string; lastName: string; staffId: string | null } };
