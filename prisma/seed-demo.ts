@@ -439,7 +439,7 @@ async function main() {
         nationality: "Nigerian",
         state: ["Lagos", "Enugu", "Kano", "Oyo", "Anambra", "Rivers"][i % 6],
         lga: "Ikeja",
-        emergencyContactName: parents[Math.floor(i / 4)].last + " Family",
+        emergencyContactName: parents[Math.floor(i / 4)].lastName + " Family",
         emergencyContactPhone: "+234-800-EMERGENCY",
         previousSchool: i % 2 === 0 ? "Sunrise International School" : "Gracefield Academy",
         schoolId: school.id,
