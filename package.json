@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-demo": "tsx prisma/seed-demo.ts",
+    "db:reset-demo-auth": "tsx scripts/reset-demo-auth.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "db:deploy": "prisma migrate deploy",

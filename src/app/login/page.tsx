@@ -12,6 +12,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GraduationCap, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
+function dashboardFor(role?: string | null): string {
+  switch (role) {
+    case "SUPER_ADMIN": return "/superadmin";
+    case "SCHOOL_ADMIN": return "/admin/dashboard";
+    case "FINANCE_OFFICER": return "/admin/finance/dashboard";
+    case "TEACHER": return "/teacher/dashboard";
+    case "PARENT": return "/parent/dashboard";
+    case "STUDENT": return "/student/dashboard";
+    default: return "/admin/dashboard";
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,7 +36,7 @@ function LoginForm() {
     setIsLoading(true);
 
     const result = await signIn("credentials", {
-      email,
+      email: email.trim().toLowerCase(),
       password,
       redirect: false,
     });
@@ -35,7 +47,17 @@ function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("callbackUrl") || "/admin/dashboard");
+    // Read the session to route each role to its own dashboard.
+    let role: string | null = null;
+    try {
+      const sres = await fetch("/api/auth/session", { cache: "no-store" });
+      const session = await sres.json();
+      role = session?.user?.role ?? null;
+    } catch {
+      role = null;
+    }
+
+    router.push(searchParams.get("callbackUrl") || dashboardFor(role));
     router.refresh();
   };
 
@@ -94,7 +116,8 @@ export default function LoginPage() {
               <p>Teacher: demo.teacher@eduflow.demo</p>
               <p>Parent: demo.parent@eduflow.demo</p>
               <p>Student: demo.student@eduflow.demo</p>
-              <p className="mt-1">Password: printed by the demo seed and documented in <span className="font-mono">docs/DEMO.md</span> — not displayed here for security.</p>
+              <p>Finance: demo.finance@eduflow.demo</p>
+              <p className="mt-1">Password: set by the demo auth reset (<span className="font-mono">npm run db:reset-demo-auth</span>) and documented in <span className="font-mono">docs/DEMO.md</span> — not displayed here for security.</p>
             </div>
           </CardContent>
         </Card>

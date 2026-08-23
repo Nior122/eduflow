@@ -95,3 +95,38 @@ After seeding and starting the app (`npm run dev`), verify each item:
 - To remove the demo tenant entirely, delete the school row (slug
   `eduflow-demo-academy`); its records are child rows and will be removed
   by the same scoped wipe on the next run.
+
+
+## Reset demo accounts (login repair)
+
+If a demo login returns "Invalid email or password", the account either
+doesn't exist in the database the app reads, or its password hash doesn't
+match. Vercel's build never seeds data — you must run the seed/reset
+against the **same database** the deployed app uses (its `DATABASE_URL`).
+
+The focused, idempotent auth reset re-creates the demo accounts with the
+app's official hashing (`bcryptjs hash`, 12 rounds) and never duplicates:
+
+```bash
+# local
+SEED_CONFIRM=yes npm run db:reset-demo-auth
+
+# against the Vercel production DB (set DATABASE_URL to the prod connection)
+SEED_CONFIRM=yes DATABASE_URL=<prod-pooled-url> npm run db:reset-demo-auth
+
+# optional custom password
+SEED_CONFIRM=yes DEMO_SEED_PASSWORD=YourStrongPassword123! npm run db:reset-demo-auth
+```
+
+It upserts users by email (lowercased), sets the correct role + schoolId +
+`isActive`/`emailVerified`, and wires the Teacher / Parent / Student portal
+profiles — re-running is safe and creates no duplicates.
+
+**Demo password (default `EduflowDemo#2026`, overridable via
+`DEMO_SEED_PASSWORD`):** printed by the reset script and stored only
+server-side — never in frontend code.
+
+> Also confirm the production environment has `AUTH_SECRET` set (Vercel →
+> Settings → Environment Variables). A missing/mismatched `AUTH_SECRET`
+> makes NextAuth fail and surfaces as the same "Invalid email or password".
+

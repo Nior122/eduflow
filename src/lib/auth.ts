@@ -34,11 +34,14 @@ const nextAuth = NextAuth({
           return null;
         }
 
-        const email = credentials.email as string;
+        // Normalize: trim + lowercase so `DEMO.ADMIN@EDUFLOW.DEMO` still
+        // matches the stored lowercase demo email, then do a case-insensitive
+        // lookup so existing mixed-case user records also resolve.
+        const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
           include: {
             school: true,
             student: true,

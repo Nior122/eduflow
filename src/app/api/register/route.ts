@@ -31,7 +31,10 @@ export async function POST(req: Request) {
     if (!parsed.ok) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.issues }, { status: 400 });
     }
-    const { name, email, password, schoolName } = parsed.data;
+    const { name, password, schoolName } = parsed.data;
+    // Normalize email (trim + lowercase) so storage matches the case-insensitive
+    // lookup used at login — prevents "invalid email" from case mismatches.
+    const email = parsed.data.email.trim().toLowerCase();
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
