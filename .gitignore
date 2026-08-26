@@ -11,3 +11,4 @@ node_modules/
 
 # .env.example is a committed template (values stay in .env.local)
 !.env.example
+.vercel
