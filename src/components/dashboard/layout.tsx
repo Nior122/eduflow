@@ -56,6 +56,7 @@ import { signOut, useSession } from "next-auth/react";
 import { getInitials } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { NotificationDrawer } from "@/components/portal/notification-drawer";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AssistantWidget } from "@/components/ai/assistant-widget";
 
 type NavItem = {
@@ -315,6 +316,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Home className="h-4 w-4" />
               Home
             </Link>
+            <ThemeToggle />
             <NotificationDrawer />
           </div>
         </header>

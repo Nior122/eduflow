@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   LayoutDashboard,
   Building2,
@@ -63,6 +64,10 @@ export function SuperAdminNav() {
         <Link href="/admin/dashboard" className="block rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent">
           Back to app
         </Link>
+        <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70">
+          <span>Appearance</span>
+          <ThemeToggle className="border-sidebar-border bg-transparent text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground" />
+        </div>
         <button
           onClick={() => void signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent"

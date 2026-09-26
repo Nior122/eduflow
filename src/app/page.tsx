@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Brain, ChartBar, GraduationCap, Shield, Users } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const features = [
   {
@@ -60,6 +61,7 @@ export default function LandingPage() {
               <span className="text-xl font-bold">EduFlow</span>
             </Link>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <Link href="/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
@@ -73,7 +75,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-transparent to-transparent dark:from-blue-950/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent dark:from-primary/10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <motion.div
@@ -81,12 +83,12 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center rounded-full border bg-muted/50 px-4 py-1.5 text-sm mb-6">
+              <div className="inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm mb-6">
                 <span className="text-primary font-medium">🚀 Now in Early Access</span>
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
                 The AI-Powered{" "}
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-gold bg-clip-text text-transparent">
                   School Operating System
                 </span>
               </h1>
@@ -129,7 +131,7 @@ export default function LandingPage() {
                   className="h-auto w-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -right-4 -z-10 h-full w-full rounded-2xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 blur-2xl" />
+              <div className="absolute -bottom-4 -right-4 -z-10 h-full w-full rounded-2xl bg-gradient-to-r from-primary/25 to-gold/25 blur-2xl" />
             </div>
           </motion.div>
         </div>
@@ -184,12 +186,12 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Transform Your School?
           </h2>
-          <p className="text-blue-100 mb-8 max-w-xl mx-auto">
+          <p className="text-white/75 mb-8 max-w-xl mx-auto">
             Join hundreds of schools already using EduFlow to manage their operations 
             and empower their teachers with AI.
           </p>
           <Link href="/register">
-            <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-blue-50 text-base">
+            <Button size="lg" variant="secondary" className="bg-gold text-gold-foreground hover:bg-gold/90 text-base">
               Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
