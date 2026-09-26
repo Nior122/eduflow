@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Brain, ChartBar, GraduationCap, Shield, Users } from "lucide-react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const features = [
@@ -109,7 +110,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Dashboard Preview */}
+          {/* Hero image - students in school uniform */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,18 +118,16 @@ export default function LandingPage() {
             className="mt-16 relative"
           >
             <div className="relative mx-auto max-w-5xl">
-              <div className="rounded-2xl border border-border/50 bg-gradient-to-b from-card to-muted/50 shadow-2xl p-2">
-                <div className="rounded-xl bg-background p-6">
-                  <div className="grid grid-cols-4 gap-4 mb-6">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-20 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-3">
-                        <div className="h-2 w-16 rounded bg-muted-foreground/20 mb-2" />
-                        <div className="h-4 w-12 rounded bg-primary/20" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="h-40 rounded-lg bg-muted/30" />
-                </div>
+              <div className="overflow-hidden rounded-2xl border border-border/50 shadow-2xl">
+                <Image
+                  src="/images/hero-students.jpg"
+                  alt="Students in school uniform raising their hands outside their school"
+                  width={1600}
+                  height={1000}
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  className="h-auto w-full object-cover"
+                />
               </div>
               <div className="absolute -bottom-4 -right-4 -z-10 h-full w-full rounded-2xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 blur-2xl" />
             </div>
